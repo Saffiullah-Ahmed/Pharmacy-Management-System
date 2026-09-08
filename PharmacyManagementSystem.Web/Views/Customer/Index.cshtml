@@ -1,0 +1,810 @@
+@model List<PharmacyManagementSystem.Web.Models.Customer>
+
+@{
+    ViewData["Title"] = "Customers";
+}
+
+
+<div class="customer-page">
+
+    <!-- ==========================================
+         HEADER
+    ========================================== -->
+
+    <div class="customer-header">
+
+        <div>
+
+            <h1>Customers</h1>
+
+            <p>
+                Manage pharmacy customers and their information
+            </p>
+
+        </div>
+
+
+        <a asp-controller="Customer"
+           asp-action="Create"
+           class="add-btn">
+
+            + Add Customer
+
+        </a>
+
+    </div>
+
+
+    <!-- ==========================================
+         SUCCESS MESSAGE
+    ========================================== -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+
+            ✓ @TempData["SuccessMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         ERROR MESSAGE
+    ========================================== -->
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+
+            ⚠ @TempData["ErrorMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         CUSTOMER TABLE
+    ========================================== -->
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="empty-card">
+
+            <div class="empty-icon">
+                👥
+            </div>
+
+
+            <h2>
+                No Customers Found
+            </h2>
+
+
+            <p>
+                No customers have been added to this pharmacy yet.
+            </p>
+
+
+            <a asp-controller="Customer"
+               asp-action="Create"
+               class="empty-btn">
+
+                + Add First Customer
+
+            </a>
+
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>Customer</th>
+
+                            <th>Phone</th>
+
+                            <th>CNIC</th>
+
+                            <th>Address</th>
+
+                            <th>Created</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var customer in Model)
+                        {
+                            <tr>
+
+                                <!-- NUMBER -->
+
+                                <td class="number-cell">
+
+                                    @customer.Id
+
+                                </td>
+
+
+                                <!-- CUSTOMER -->
+
+                                <td>
+
+                                    <div class="customer-info">
+
+                                        <div class="customer-avatar">
+
+                                            @(string.IsNullOrWhiteSpace(customer.Name)
+                                                ? "?"
+                                                : customer.Name.Substring(0, 1).ToUpper())
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <strong>
+                                                @customer.Name
+                                            </strong>
+
+                                            <span>
+                                                Customer
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- PHONE -->
+
+                                <td>
+
+                                    @if (string.IsNullOrWhiteSpace(customer.Phone))
+                                    {
+                                        <span class="not-provided">
+
+                                            Not provided
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+
+                                            @customer.Phone
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- CNIC -->
+
+                                <td>
+
+                                    @if (string.IsNullOrWhiteSpace(customer.CNIC))
+                                    {
+                                        <span class="not-provided">
+
+                                            Not provided
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+
+                                            @customer.CNIC
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ADDRESS -->
+
+                                <td>
+
+                                    @if (string.IsNullOrWhiteSpace(customer.Address))
+                                    {
+                                        <span class="not-provided">
+
+                                            Not provided
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+
+                                            @customer.Address
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- CREATED -->
+
+                                <td>
+
+                                    <span class="created-date">
+
+                                        @customer.CreatedAt.ToString("dd/MM/yyyy")
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ACTIONS -->
+
+                                <td>
+
+                                    <div class="action-buttons">
+
+                                        <a asp-controller="Customer"
+                                           asp-action="Edit"
+                                           asp-route-id="@customer.Id"
+                                           class="edit-btn">
+
+                                            Edit
+
+                                        </a>
+
+
+                                        <a asp-controller="Customer"
+                                           asp-action="Delete"
+                                           asp-route-id="@customer.Id"
+                                           class="delete-btn">
+
+                                            Delete
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    }
+
+</div>
+
+
+<style>
+
+    /* ==========================================
+       PAGE
+    ========================================== */
+
+    .customer-page
+    {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 4px;
+        box-sizing: border-box;
+    }
+
+
+    /* ==========================================
+       HEADER
+    ========================================== */
+
+    .customer-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 22px;
+    }
+
+
+    .customer-header h1
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 30px;
+        font-weight: 700;
+    }
+
+
+    .customer-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+
+    /* ==========================================
+       ADD BUTTON
+    ========================================== */
+
+    .add-btn
+    {
+        display: inline-block;
+        padding: 11px 17px;
+        background: #2563eb;
+        color: white;
+        border-radius: 9px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: .2s;
+        white-space: nowrap;
+    }
+
+
+    .add-btn:hover
+    {
+        background: #1d4ed8;
+        color: white;
+    }
+
+
+    /* ==========================================
+       TABLE CARD
+    ========================================== */
+
+    .table-card
+    {
+        width: 100%;
+        box-sizing: border-box;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 15px;
+
+        overflow: hidden;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+    }
+
+
+    .table-wrapper
+    {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+
+    table
+    {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+
+
+    /* ==========================================
+       TABLE HEADER
+    ========================================== */
+
+    thead
+    {
+        background: #f8fafc;
+    }
+
+
+    th
+    {
+        padding: 14px 16px;
+
+        text-align: left;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        text-transform: uppercase;
+
+        letter-spacing: .03em;
+
+        border-bottom: 1px solid #e2e8f0;
+
+        white-space: nowrap;
+    }
+
+
+    /* ==========================================
+       TABLE BODY
+    ========================================== */
+
+    td
+    {
+        padding: 15px 16px;
+
+        color: #334155;
+
+        font-size: 13px;
+
+        border-bottom: 1px solid #f1f5f9;
+
+        vertical-align: middle;
+    }
+
+
+    tbody tr:hover
+    {
+        background: #f8fafc;
+    }
+
+
+    tbody tr:last-child td
+    {
+        border-bottom: none;
+    }
+
+
+    .number-cell
+    {
+        color: #94a3b8;
+
+        font-size: 12px;
+
+        font-weight: 600;
+    }
+
+
+    /* ==========================================
+       CUSTOMER INFO
+    ========================================== */
+
+    .customer-info
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+    }
+
+
+    .customer-avatar
+    {
+        width: 38px;
+
+        height: 38px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        flex-shrink: 0;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        border-radius: 50%;
+
+        font-size: 14px;
+
+        font-weight: 700;
+    }
+
+
+    .customer-info strong
+    {
+        display: block;
+
+        color: #172554;
+
+        font-size: 13px;
+    }
+
+
+    .customer-info span
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+
+    /* ==========================================
+       NOT PROVIDED
+    ========================================== */
+
+    .not-provided
+    {
+        color: #94a3b8;
+
+        font-size: 12px;
+
+        font-style: italic;
+    }
+
+
+    /* ==========================================
+       CREATED DATE
+    ========================================== */
+
+    .created-date
+    {
+        color: #64748b;
+
+        font-size: 12px;
+
+        white-space: nowrap;
+    }
+
+
+    /* ==========================================
+       ACTION BUTTONS
+    ========================================== */
+
+    .action-buttons
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 7px;
+    }
+
+
+    .edit-btn,
+    .delete-btn
+    {
+        display: inline-block;
+
+        padding: 7px 11px;
+
+        border-radius: 7px;
+
+        text-decoration: none;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+        transition: .2s;
+    }
+
+
+    .edit-btn
+    {
+        background: #eff6ff;
+
+        color: #2563eb;
+    }
+
+
+    .edit-btn:hover
+    {
+        background: #dbeafe;
+
+        color: #1d4ed8;
+    }
+
+
+    .delete-btn
+    {
+        background: #fef2f2;
+
+        color: #dc2626;
+    }
+
+
+    .delete-btn:hover
+    {
+        background: #fee2e2;
+
+        color: #b91c1c;
+    }
+
+
+    /* ==========================================
+       EMPTY STATE
+    ========================================== */
+
+    .empty-card
+    {
+        padding: 65px 20px;
+
+        text-align: center;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 15px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.04);
+    }
+
+
+    .empty-icon
+    {
+        width: 58px;
+
+        height: 58px;
+
+        margin: 0 auto 16px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        background: #eff6ff;
+
+        border-radius: 50%;
+
+        font-size: 25px;
+    }
+
+
+    .empty-card h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 20px;
+    }
+
+
+    .empty-card p
+    {
+        margin: 7px 0 20px;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+
+    .empty-btn
+    {
+        display: inline-block;
+
+        padding: 10px 16px;
+
+        background: #2563eb;
+
+        color: white;
+
+        border-radius: 8px;
+
+        text-decoration: none;
+
+        font-size: 12px;
+
+        font-weight: 600;
+    }
+
+
+    .empty-btn:hover
+    {
+        background: #1d4ed8;
+
+        color: white;
+    }
+
+
+    /* ==========================================
+       MESSAGES
+    ========================================== */
+
+    .success-message
+    {
+        padding: 12px 15px;
+
+        margin-bottom: 15px;
+
+        border-radius: 9px;
+
+        background: #f0fdf4;
+
+        border: 1px solid #bbf7d0;
+
+        color: #15803d;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .error-message
+    {
+        padding: 12px 15px;
+
+        margin-bottom: 15px;
+
+        border-radius: 9px;
+
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        color: #dc2626;
+
+        font-size: 13px;
+    }
+
+
+    /* ==========================================
+       MOBILE
+    ========================================== */
+
+    @@media (max-width: 700px)
+    {
+        .customer-header
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+
+        .add-btn
+        {
+            width: 100%;
+
+            box-sizing: border-box;
+
+            text-align: center;
+        }
+
+
+        .table-card
+        {
+            border-radius: 12px;
+        }
+    }
+
+</style>

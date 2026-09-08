@@ -1,0 +1,214 @@
+@model List<PharmacyManagementSystem.Web.Models.Purchase>
+
+@{
+    ViewData["Title"] = "Purchase History";
+}
+
+<div class="container-fluid">
+
+    <!-- ==========================================
+         HEADER
+    =========================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                Purchase History
+            </h2>
+
+            <p class="text-muted mb-0">
+                View all medicine purchases
+            </p>
+        </div>
+
+        <div>
+            <a asp-controller="Purchase"
+               asp-action="Create"
+               class="btn btn-primary">
+
+                ➕ New Purchase
+
+            </a>
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         SUCCESS MESSAGE
+    =========================================== -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+
+            @TempData["SuccessMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         ERROR MESSAGE
+    =========================================== -->
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+
+            @TempData["ErrorMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         PURCHASE HISTORY
+    ========================================== -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-body">
+
+            @if (Model == null ||
+                 Model.Count == 0)
+            {
+                <div class="text-center py-5">
+
+                    <div style="font-size: 30px; font-weight: 700;">
+                        📦
+                    </div>
+
+                    <h4 class="mt-3">
+                        No Purchases Found
+                    </h4>
+
+                    <p class="text-muted">
+                        You have not recorded any purchases yet.
+                    </p>
+
+                    <a asp-controller="Purchase"
+                       asp-action="Create"
+                       class="btn btn-primary">
+
+                        Create First Purchase
+
+                    </a>
+
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    Invoice
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+
+                                <th>
+                                    Supplier
+                                </th>
+
+                                <th>
+                                    Total Amount
+                                </th>
+
+                                <th class="text-center">
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (var purchase in Model)
+                            {
+                                <tr>
+
+                                    <!-- Purchase ID -->
+
+                                    <td>
+                                        @purchase.Id
+                                    </td>
+
+
+                                    <!-- Invoice -->
+
+                                    <td>
+                                        <strong>
+                                            @purchase.InvoiceNumber
+                                        </strong>
+                                    </td>
+
+
+                                    <!-- Purchase Date -->
+
+                                    <td>
+                                        @purchase.PurchaseDate.ToString("dd MMM yyyy")
+                                    </td>
+
+
+                                    <!-- Supplier -->
+
+                                    <td>
+                                        @purchase.SupplierName
+                                    </td>
+
+
+                                    <!-- Total Amount -->
+
+                                    <td>
+                                        <strong>
+                                            Rs. @purchase.TotalAmount.ToString("N2")
+                                        </strong>
+                                    </td>
+
+
+                                    <!-- Action -->
+
+                                    <td class="text-center">
+
+                                        <a asp-controller="Purchase"
+                                           asp-action="Details"
+                                           asp-route-id="@purchase.Id"
+                                           class="btn btn-sm btn-outline-primary">
+
+                                            👁 View
+
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>

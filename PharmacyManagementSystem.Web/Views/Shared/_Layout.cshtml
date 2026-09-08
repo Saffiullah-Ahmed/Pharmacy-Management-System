@@ -1,0 +1,512 @@
+﻿@using PharmacyManagementSystem.Web.Authorization
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @ViewData["Title"] - PharmaCare
+    </title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/PharmacyManagementSystem.Web.styles.css"
+          asp-append-version="true" />
+
+</head>
+
+
+<body>
+
+    <div class="app-layout">
+
+        <!-- ==========================================================
+             SIDEBAR
+        =========================================================== -->
+
+        <aside class="sidebar">
+
+            <!-- ======================================================
+                 BRAND
+            ======================================================= -->
+
+            <div class="brand">
+
+                <div class="brand-icon">
+                    💊
+                </div>
+
+                <div class="brand-text">
+
+                    <h2>
+                        PharmaCare
+                    </h2>
+
+                    <span>
+                        Management System
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ======================================================
+                 MENU
+            ======================================================= -->
+
+            <nav class="menu">
+
+                <!-- ==================================================
+                     DASHBOARD
+                =================================================== -->
+
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="menu-item">
+
+                    <span>
+                        🏠
+                    </span>
+
+                    <span>
+                        Dashboard
+                    </span>
+
+                </a>
+
+
+                <!-- ==================================================
+                     MEDICINES
+                =================================================== -->
+
+                @if (User.IsInRole("Admin") ||
+                     PermissionChecker.HasPermission(
+                         User,
+                         "Medicine Management"))
+                {
+                    <a asp-controller="Medicine"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            💊
+                        </span>
+
+                        <span>
+                            Medicines
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- ==================================================
+                     SALES
+                =================================================== -->
+
+                @if (User.IsInRole("Admin") ||
+                     PermissionChecker.HasPermission(
+                         User,
+                         "Sales Management"))
+                {
+                    <a asp-controller="Sale"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            🛒
+                        </span>
+
+                        <span>
+                            Sales
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- ==================================================
+                     PURCHASES
+                =================================================== -->
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Purchase"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            📦
+                        </span>
+
+                        <span>
+                            Purchases
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- ==================================================
+                     SUPPLIERS
+                =================================================== -->
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Supplier"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            🏢
+                        </span>
+
+                        <span>
+                            Suppliers
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- ==================================================
+                     REPORTS
+                =================================================== -->
+
+                @if (User.IsInRole("Admin") ||
+                     PermissionChecker.HasPermission(
+                         User,
+                         "Reports"))
+                {
+                    <a asp-controller="Reports"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            📊
+                        </span>
+
+                        <span>
+                            Reports
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- ==================================================
+                     CUSTOMERS
+                =================================================== -->
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Customer"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            👥
+                        </span>
+
+                        <span>
+                            Customers
+                        </span>
+
+                    </a>
+                }
+
+
+                <!-- ==================================================
+                     PENDING PAYMENTS
+                =================================================== -->
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="CustomerCredit"
+                       asp-action="Index"
+                       class="menu-item">
+
+                        <span>
+                            💰
+                        </span>
+
+                        <span>
+                            Pending Payments
+                        </span>
+
+                    </a>
+                }
+
+                <!-- ==================================================
+                     USER MANAGEMENT REMOVED
+                     
+                     User Management is now inside Settings.
+                =================================================== -->
+
+            </nav>
+
+
+            <!-- ======================================================
+                 SIDEBAR BOTTOM
+            ======================================================= -->
+
+            <div class="sidebar-bottom">
+
+                <!-- ==================================================
+                     SETTINGS
+                =================================================== -->
+
+                <a asp-controller="Settings"
+                   asp-action="Index"
+                   class="menu-item">
+
+                    <span>
+                        ⚙️
+                    </span>
+
+                    <span>
+                        Settings
+                    </span>
+
+                </a>
+
+
+                <!-- ==================================================
+                     LOGOUT
+                =================================================== -->
+
+                <form asp-controller="Account"
+                      asp-action="Logout"
+                      method="post"
+                      class="logout-form">
+
+                    @Html.AntiForgeryToken()
+
+                    <button type="submit"
+                            class="menu-item logout">
+
+                        <span>
+                            🚪
+                        </span>
+
+                        <span>
+                            Logout
+                        </span>
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+
+        <!-- ==========================================================
+             MAIN APPLICATION
+        =========================================================== -->
+
+        <div class="app-main">
+
+
+            <!-- ======================================================
+                 TOP NAVBAR
+            ======================================================= -->
+
+            <header class="top-navbar">
+
+                <!-- ==================================================
+                     PHARMACY NAME
+                =================================================== -->
+
+                <div class="top-navbar-left">
+
+                    @if (User.Identity != null &&
+                         User.Identity.IsAuthenticated)
+                    {
+                        <span class="page-system-name">
+
+                            @User.FindFirst(
+                                "PharmacyName"
+                            )?.Value
+
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="page-system-name">
+                            PharmaCare
+                        </span>
+                    }
+
+                </div>
+
+
+                <!-- ==================================================
+                     CURRENT USER
+                =================================================== -->
+
+                <div class="top-navbar-right">
+
+                    @if (User.Identity != null &&
+                         User.Identity.IsAuthenticated)
+                    {
+                        <div class="current-user">
+
+                            <div class="current-user-icon">
+                                👤
+                            </div>
+
+                            <div class="current-user-info">
+
+                                <strong>
+                                    @User.Identity.Name
+                                </strong>
+
+                                <span>
+                                    @User.FindFirst(
+                                        System.Security.Claims.ClaimTypes.Role
+                                    )?.Value
+                                </span>
+
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+            </header>
+
+
+            <!-- ======================================================
+                 PAGE CONTENT
+            ======================================================= -->
+
+            <main class="page-content">
+
+                @RenderBody()
+
+            </main>
+
+
+            <!-- ======================================================
+                 FOOTER
+            ======================================================= -->
+
+            <footer class="app-footer">
+
+                <span>
+                    © 2026 PharmaCare Management System
+                </span>
+
+            </footer>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         JAVASCRIPT
+    =========================================================== -->
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
+
+    @await RenderSectionAsync(
+        "Scripts",
+        required: false
+    )
+
+</body>
+
+</html>
+
+
+<style>
+
+    /* ============================================================
+       CURRENT USER
+    ============================================================ */
+
+    .current-user
+    {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 12px;
+        border-radius: 10px;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+    }
+
+
+    .current-user-icon
+    {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid #dbeafe;
+        font-size: 14px;
+    }
+
+
+    .current-user-info
+    {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+
+    .current-user-info strong
+    {
+        color: #172554;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+
+    .current-user-info span
+    {
+        margin-top: 3px;
+        color: #2563eb;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+
+    /* ============================================================
+       PHARMACY NAME
+    ============================================================ */
+
+    .page-system-name
+    {
+        color: #172554;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+</style>

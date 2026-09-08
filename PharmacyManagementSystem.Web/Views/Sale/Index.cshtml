@@ -1,0 +1,1235 @@
+@model List<PharmacyManagementSystem.Web.Models.Sale>
+
+@{
+    ViewData["Title"] = "Sales";
+
+    var returns =
+        ViewBag.Returns
+        as List<PharmacyManagementSystem.Web.Models.SaleReturn>
+        ?? new List<PharmacyManagementSystem.Web.Models.SaleReturn>();
+
+
+    decimal totalRefund =
+        ViewBag.TotalRefund != null
+            ? Convert.ToDecimal(ViewBag.TotalRefund)
+            : 0;
+
+
+    decimal totalSales =
+        Math.Max(
+            0,
+            Model.Sum(x => x.TotalAmount) -
+            totalRefund);
+
+
+    decimal totalNetSales =
+        Math.Max(
+            0,
+            Model.Sum(x => x.NetAmount) -
+            totalRefund);
+
+
+    int medicinesSold =
+    Model.Sum(
+        sale => sale.Items.Sum(
+            item => item.Quantity ?? 0));
+
+
+    decimal totalChange =
+        Model.Sum(x => x.ChangeAmount);
+
+
+    // ============================================================
+    // TODAY
+    // ============================================================
+
+    int todaySalesCount =
+        ViewBag.TodaySalesCount != null
+            ? Convert.ToInt32(ViewBag.TodaySalesCount)
+            : 0;
+
+
+    decimal todayGrossSales =
+        ViewBag.TodayGrossSales != null
+            ? Convert.ToDecimal(ViewBag.TodayGrossSales)
+            : 0;
+
+
+    decimal todayNetSales =
+        ViewBag.TodayNetSales != null
+            ? Convert.ToDecimal(ViewBag.TodayNetSales)
+            : 0;
+
+
+    decimal todayRefund =
+        ViewBag.TodayRefund != null
+            ? Convert.ToDecimal(ViewBag.TodayRefund)
+            : 0;
+}
+
+
+<div class="sales-page">
+
+    <!-- ==========================================================
+         HEADER
+    ========================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>Sales</h1>
+
+            <p>
+                Manage sales, invoices and medicine returns.
+            </p>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <a asp-controller="Return"
+               asp-action="ReturnHistory"
+               class="secondary-btn">
+
+                ↩ Return History
+
+            </a>
+
+
+            <!-- ==================================================
+                 PENDING PAYMENTS
+            ================================================== -->
+
+            <a asp-controller="CustomerCredit"
+               asp-action="Index"
+               class="secondary-btn">
+
+                💰 Pending Payments
+
+            </a>
+
+
+            <a asp-action="ExportCsv"
+               class="secondary-btn">
+
+                ↓ Export CSV
+
+            </a>
+
+
+            <a asp-action="Create"
+               class="primary-btn">
+
+                + New Sale
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         MESSAGES
+    ========================================================== -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+
+            ✓ @TempData["SuccessMessage"]
+
+        </div>
+    }
+
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+
+            ⚠ @TempData["ErrorMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================================
+         TODAY'S SALES
+    ========================================================== -->
+
+    <div class="today-section">
+
+        <div class="today-header">
+
+            <div>
+
+                <h2>
+                    Today's Sales
+                </h2>
+
+                <p>
+                    Sales and refunds recorded today.
+                </p>
+
+            </div>
+
+
+            <span class="today-date">
+                @DateTime.Today.ToString("dd/MM/yyyy")
+            </span>
+
+        </div>
+
+
+        <div class="today-grid">
+
+            <div class="today-card">
+
+                <span class="today-label">
+                    Today's Transactions
+                </span>
+
+                <strong>
+                    @todaySalesCount
+                </strong>
+
+            </div>
+
+
+            <div class="today-card">
+
+                <span class="today-label">
+                    Today's Gross Sales
+                </span>
+
+                <strong>
+                    Rs. @todayGrossSales.ToString("N2")
+                </strong>
+
+            </div>
+
+
+            <div class="today-card refund-card">
+
+                <span class="today-label">
+                    Today's Refunds
+                </span>
+
+                <strong>
+                    Rs. @todayRefund.ToString("N2")
+                </strong>
+
+            </div>
+
+
+            <div class="today-card">
+
+                <span class="today-label">
+                    Today's Net Sales
+                </span>
+
+                <strong>
+                    Rs. @todayNetSales.ToString("N2")
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         OVERALL SUMMARY
+    ========================================================== -->
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Total Sales
+            </span>
+
+            <strong>
+                @Model.Count
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Gross Sales
+            </span>
+
+            <strong>
+                Rs. @totalSales.ToString("N2")
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card refund-card">
+
+            <span class="summary-label">
+                Refunds
+            </span>
+
+            <strong>
+                Rs. @totalRefund.ToString("N2")
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Net Sales
+            </span>
+
+            <strong>
+                Rs. @totalNetSales.ToString("N2")
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Medicines Sold
+            </span>
+
+            <strong>
+                @medicinesSold
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span class="summary-label">
+                Change Given
+            </span>
+
+            <strong>
+                Rs. @totalChange.ToString("N2")
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         SALES HISTORY
+    ========================================================== -->
+
+    <div class="sales-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>
+                    Sales History
+                </h2>
+
+                <p>
+                    View sales and invoices for this pharmacy.
+                </p>
+
+            </div>
+
+
+            <div class="search-box">
+
+                <input type="text"
+                       id="salesSearch"
+                       placeholder="Search invoice..."
+                       autocomplete="off"
+                       oninput="searchSales()" />
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table class="sales-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Invoice</th>
+
+                        <th>Date & Time</th>
+
+                        <th>Medicines</th>
+
+                        <th>Original Gross</th>
+
+                        <th>Discount</th>
+
+                        <th>Original Net</th>
+
+                        <th>Refund</th>
+
+                        <th>Actual Gross</th>
+
+                        <th>Actual Net</th>
+
+                        <th>Received</th>
+
+                        <th>Change</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="salesTableBody">
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+
+                            <td colspan="13"
+                                class="empty-row">
+
+                                No sales found.
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (
+                            var sale in
+                            Model.OrderByDescending(
+                                x => x.SaleDate))
+                        {
+                            decimal saleRefund =
+                                returns
+                                    .Where(
+                                        r =>
+                                            r.SaleId ==
+                                            sale.Id)
+                                    .Sum(
+                                        r =>
+                                            r.TotalRefund);
+
+
+                            decimal actualGross =
+                                Math.Max(
+                                    0,
+                                    sale.TotalAmount -
+                                    saleRefund);
+
+
+                            decimal actualNet =
+                                Math.Max(
+                                    0,
+                                    sale.NetAmount -
+                                    saleRefund);
+
+
+                            <tr>
+
+                                <td>
+                                    @sale.Id
+                                </td>
+
+
+                                <td>
+
+                                    <strong class="invoice-number">
+                                        @sale.InvoiceNumber
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    @sale.SaleDate.ToString(
+                                        "dd/MM/yyyy hh:mm tt")
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="medicine-count">
+
+                                        @sale.Items.Sum(
+                                            item =>
+                                                item.Quantity)
+
+                                    </span>
+
+                                    item(s)
+
+                                </td>
+
+
+                                <!-- ORIGINAL GROSS -->
+
+                                <td>
+                                    Rs.
+                                    @sale.TotalAmount.ToString("N2")
+                                </td>
+
+
+                                <!-- DISCOUNT -->
+
+                                <td>
+
+                                    @if (sale.DiscountAmount > 0)
+                                    {
+                                        <span>
+                                            -
+                                            Rs.
+                                            @sale.DiscountAmount.ToString("N2")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-refund">
+                                            —
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ORIGINAL NET -->
+
+                                <td>
+                                    Rs.
+                                    @sale.NetAmount.ToString("N2")
+                                </td>
+
+
+                                <!-- REFUND -->
+
+                                <td>
+
+                                    @if (saleRefund > 0)
+                                    {
+                                        <span class="refund-text">
+
+                                            - Rs.
+                                            @saleRefund.ToString("N2")
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-refund">
+                                            —
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ACTUAL GROSS -->
+
+                                <td>
+
+                                    <strong>
+                                        Rs.
+                                        @actualGross.ToString("N2")
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- ACTUAL NET -->
+
+                                <td>
+
+                                    <strong>
+                                        Rs.
+                                        @actualNet.ToString("N2")
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- RECEIVED -->
+
+                                <td>
+                                    Rs.
+                                    @sale.AmountReceived.ToString("N2")
+                                </td>
+
+
+                                <!-- CHANGE -->
+
+                                <td>
+                                    Rs.
+                                    @sale.ChangeAmount.ToString("N2")
+                                </td>
+
+
+                                <!-- ACTION -->
+
+                                <td>
+
+                                    <div class="action-buttons">
+
+                                        <a asp-action="Bill"
+                                           asp-route-id="@sale.Id"
+                                           class="table-btn bill-btn">
+
+                                            Bill
+
+                                        </a>
+
+
+                                        <a asp-controller="Return"
+                                           asp-action="Create"
+                                           asp-route-saleId="@sale.Id"
+                                           class="table-btn return-btn">
+
+                                            Return
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        function searchSales()
+        {
+            const search =
+                document
+                    .getElementById("salesSearch")
+                    .value
+                    .toLowerCase()
+                    .trim();
+
+
+            const rows =
+                document.querySelectorAll(
+                    "#salesTableBody tr");
+
+
+            rows.forEach(function(row)
+            {
+                const text =
+                    row.textContent.toLowerCase();
+
+
+                row.style.display =
+                    text.includes(search)
+                        ? ""
+                        : "none";
+            });
+        }
+
+    </script>
+}
+
+
+<style>
+
+    /* ============================================================
+       PAGE
+    ============================================================ */
+
+    .sales-page
+    {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        box-sizing: border-box;
+    }
+    .sales-page
+    {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 4px;
+        box-sizing: border-box;
+    }
+
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+
+    .page-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+        margin-bottom: 22px;
+    }
+
+
+    .page-header h1
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 30px;
+        font-weight: 700;
+    }
+
+
+    .page-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+
+    .header-actions
+    {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 9px;
+        flex-wrap: wrap;
+    }
+
+
+    .primary-btn,
+    .secondary-btn
+    {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 15px;
+        border-radius: 9px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .primary-btn
+    {
+        background: #2563eb;
+        color: white;
+    }
+
+
+    .primary-btn:hover
+    {
+        background: #1d4ed8;
+    }
+
+
+    .secondary-btn
+    {
+        background: white;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+
+
+    .secondary-btn:hover
+    {
+        background: #f8fafc;
+        color: #172554;
+    }
+
+
+    /* ============================================================
+       MESSAGES
+    ============================================================ */
+
+    .success-message,
+    .error-message
+    {
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .success-message
+    {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #15803d;
+    }
+
+
+    .error-message
+    {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+
+    /* ============================================================
+       TODAY SECTION
+    ============================================================ */
+
+    .today-section
+    {
+        background: white;
+        border: 1px solid #dbeafe;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.04);
+    }
+
+
+    .today-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 16px;
+    }
+
+
+    .today-header h2
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 19px;
+    }
+
+
+    .today-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    .today-date
+    {
+        padding: 7px 11px;
+        background: #eff6ff;
+        color: #2563eb;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+
+    .today-grid
+    {
+        display: grid;
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+
+    .today-card
+    {
+        padding: 17px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 11px;
+    }
+
+
+    .today-label
+    {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+
+    .today-card strong
+    {
+        color: #172554;
+        font-size: 19px;
+    }
+
+
+    .today-card.refund-card
+    {
+        background: #fff7f7;
+        border-color: #fecaca;
+    }
+
+
+    .today-card.refund-card strong
+    {
+        color: #dc2626;
+    }
+
+
+    /* ============================================================
+       SUMMARY
+    ============================================================ */
+
+    .summary-grid
+    {
+        display: grid;
+        grid-template-columns:
+            repeat(6, minmax(0, 1fr));
+        gap: 13px;
+        margin-bottom: 20px;
+    }
+
+
+    .summary-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 13px;
+        padding: 18px;
+        box-shadow:
+            0 3px 12px
+            rgba(15,23,42,.04);
+    }
+
+
+    .summary-label
+    {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+
+    .summary-card strong
+    {
+        color: #172554;
+        font-size: 18px;
+    }
+
+
+    .summary-card.refund-card strong
+    {
+        color: #dc2626;
+    }
+
+
+    /* ============================================================
+       SALES CARD
+    ============================================================ */
+
+    .sales-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+    }
+
+
+    .card-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 20px 22px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .card-header h2
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 19px;
+    }
+
+
+    .card-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    /* ============================================================
+       SEARCH
+    ============================================================ */
+
+    .search-box input
+    {
+        width: 230px;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+        font-size: 12px;
+    }
+
+
+    .search-box input:focus
+    {
+        border-color: #2563eb;
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
+    }
+
+
+    /* ============================================================
+       TABLE
+    ============================================================ */
+
+    .table-wrapper
+    {
+        overflow-x: auto;
+    }
+
+
+    .sales-table
+    {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1500px;
+    }
+
+
+    .sales-table th
+    {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        padding: 13px 15px;
+        text-align: left;
+        border-bottom:
+            1px solid #e2e8f0;
+    }
+
+
+    .sales-table td
+    {
+        padding: 14px 15px;
+        color: #475569;
+        font-size: 12px;
+        border-bottom:
+            1px solid #f1f5f9;
+        white-space: nowrap;
+    }
+
+
+    .sales-table tbody tr:hover
+    {
+        background: #f8fafc;
+    }
+
+
+    .invoice-number
+    {
+        color: #2563eb;
+    }
+
+
+    .medicine-count
+    {
+        font-weight: 700;
+        color: #172554;
+    }
+
+
+    .refund-text
+    {
+        color: #dc2626;
+        font-weight: 600;
+    }
+
+
+    .no-refund
+    {
+        color: #94a3b8;
+    }
+
+
+    /* ============================================================
+       ACTION BUTTONS
+    ============================================================ */
+
+    .action-buttons
+    {
+        display: flex;
+        gap: 6px;
+    }
+
+
+    .table-btn
+    {
+        padding: 7px 9px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+
+    .bill-btn
+    {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+
+    .bill-btn:hover
+    {
+        background: #dbeafe;
+    }
+
+
+    .return-btn
+    {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+
+
+    .return-btn:hover
+    {
+        background: #ffedd5;
+    }
+
+
+    /* ============================================================
+       EMPTY
+    ============================================================ */
+
+    .empty-row
+    {
+        text-align: center;
+        padding: 40px !important;
+        color: #94a3b8 !important;
+    }
+
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+
+    @@media (max-width: 1200px)
+    {
+        .summary-grid
+        {
+            grid-template-columns:
+                repeat(3, 1fr);
+        }
+
+        .today-grid
+        {
+            grid-template-columns:
+                repeat(2, 1fr);
+        }
+    }
+
+
+    @@media (max-width: 700px)
+    {
+        .page-header
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .today-header
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .today-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .card-header
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .search-box,
+        .search-box input
+        {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+
+        .summary-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .header-actions
+        {
+            width: 100%;
+        }
+
+
+        .header-actions a
+        {
+            flex: 1;
+        }
+    }
+
+</style>

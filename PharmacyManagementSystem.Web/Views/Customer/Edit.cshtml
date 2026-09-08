@@ -1,0 +1,597 @@
+@model PharmacyManagementSystem.Web.Models.Customer
+
+@{
+    ViewData["Title"] = "Edit Customer";
+}
+
+<div class="customer-page">
+
+    <div class="page-header">
+
+        <div>
+            <h1>Edit Customer</h1>
+
+            <p>
+                Update customer information
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="back-btn">
+
+            ← Back to Customers
+
+        </a>
+
+    </div>
+
+
+    <div class="customer-card">
+
+        <div class="card-header">
+
+            <div class="card-icon">
+                ✏️
+            </div>
+
+            <div>
+                <h2>Customer Information</h2>
+
+                <p>
+                    Update the customer's details below.
+                </p>
+            </div>
+
+        </div>
+
+
+        <form asp-action="Edit"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+
+            <input type="hidden"
+                   asp-for="Id" />
+
+            <input type="hidden"
+                   asp-for="CreatedAt" />
+
+
+            <div asp-validation-summary="ModelOnly"
+                 class="validation-summary">
+            </div>
+
+
+            <!-- NAME -->
+
+            <div class="form-group">
+
+                <label asp-for="Name">
+                    Customer Name
+                </label>
+
+                <input asp-for="Name"
+                       class="form-control"
+                       placeholder="Enter customer name"
+                       autocomplete="off"
+                       required />
+
+                <span asp-validation-for="Name"
+                      class="validation-message">
+                </span>
+
+            </div>
+
+
+            <!-- PHONE -->
+
+            <div class="form-group">
+
+                <label asp-for="Phone">
+                    Phone Number
+                </label>
+
+                <input asp-for="Phone"
+                       class="form-control"
+                       placeholder="Enter phone number"
+                       autocomplete="off"
+                       required />
+
+                <span asp-validation-for="Phone"
+                      class="validation-message">
+                </span>
+
+            </div>
+
+
+            <!-- CNIC -->
+
+            <div class="form-group">
+
+                <label asp-for="CNIC">
+                    CNIC
+
+                    <span class="optional">
+                        Optional
+                    </span>
+                </label>
+
+                <input asp-for="CNIC"
+                       id="cnic"
+                       class="form-control"
+                       placeholder="XXXXX-XXXXXXX-X"
+                       maxlength="15"
+                       autocomplete="off"
+                       inputmode="numeric" />
+
+                <small>
+                    Example: 37405-1234567-1
+                </small>
+
+                <span asp-validation-for="CNIC"
+                      class="validation-message">
+                </span>
+
+            </div>
+
+
+            <!-- ADDRESS -->
+
+            <div class="form-group">
+
+                <label asp-for="Address">
+                    Address
+
+                    <span class="optional">
+                        Optional
+                    </span>
+                </label>
+
+                <textarea asp-for="Address"
+                          class="form-control"
+                          rows="3"
+                          placeholder="Enter customer address"></textarea>
+
+                <span asp-validation-for="Address"
+                      class="validation-message">
+                </span>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="form-actions">
+
+                <a asp-action="Index"
+                   class="cancel-btn">
+
+                    Cancel
+
+                </a>
+
+                <button type="submit"
+                        class="save-btn">
+
+                    ✓ Save Changes
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        const cnicInput =
+            document.getElementById("cnic");
+
+
+        function formatCNIC(value)
+        {
+            value =
+                value.replace(/\D/g, "");
+
+            value =
+                value.substring(0, 13);
+
+
+            let formatted = "";
+
+
+            if (value.length <= 5)
+            {
+                formatted = value;
+            }
+            else if (value.length <= 12)
+            {
+                formatted =
+                    value.substring(0, 5)
+                    + "-"
+                    + value.substring(5);
+            }
+            else
+            {
+                formatted =
+                    value.substring(0, 5)
+                    + "-"
+                    + value.substring(5, 12)
+                    + "-"
+                    + value.substring(12);
+            }
+
+
+            return formatted;
+        }
+
+
+        cnicInput?.addEventListener(
+            "input",
+            function ()
+            {
+                this.value =
+                    formatCNIC(this.value);
+            });
+
+
+        // Format existing CNIC when editing.
+        if (cnicInput &&
+            cnicInput.value)
+        {
+            cnicInput.value =
+                formatCNIC(cnicInput.value);
+        }
+
+    </script>
+}
+
+
+<style>
+
+    .customer-page
+    {
+        max-width: 800px;
+
+        margin: 0 auto;
+    }
+
+
+    .page-header
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 22px;
+    }
+
+
+    .page-header h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 30px;
+    }
+
+
+    .page-header p
+    {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 14px;
+    }
+
+
+    .back-btn
+    {
+        padding: 10px 15px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .back-btn:hover
+    {
+        background: #f8fafc;
+
+        color: #172554;
+    }
+
+
+    .customer-card
+    {
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 15px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+
+        overflow: hidden;
+    }
+
+
+    .card-header
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
+
+        padding: 22px;
+
+        background: #eff6ff;
+
+        border-bottom: 1px solid #dbeafe;
+    }
+
+
+    .card-icon
+    {
+        width: 48px;
+
+        height: 48px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        background: white;
+
+        border-radius: 12px;
+
+        font-size: 22px;
+    }
+
+
+    .card-header h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 19px;
+    }
+
+
+    .card-header p
+    {
+        margin: 4px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+
+    .form-group
+    {
+        margin: 20px 22px;
+    }
+
+
+    .form-group label
+    {
+        display: block;
+
+        margin-bottom: 7px;
+
+        color: #334155;
+
+        font-size: 12px;
+
+        font-weight: 700;
+    }
+
+
+    .optional
+    {
+        margin-left: 5px;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+
+        font-weight: 500;
+    }
+
+
+    .form-control
+    {
+        width: 100%;
+
+        box-sizing: border-box;
+
+        padding: 12px 13px;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 9px;
+
+        outline: none;
+
+        background: white;
+
+        color: #172554;
+
+        font-size: 13px;
+
+        transition: .2s;
+    }
+
+
+    textarea.form-control
+    {
+        resize: vertical;
+    }
+
+
+    .form-control:focus
+    {
+        border-color: #2563eb;
+
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
+    }
+
+
+    .form-group small
+    {
+        display: block;
+
+        margin-top: 6px;
+
+        color: #94a3b8;
+
+        font-size: 11px;
+    }
+
+
+    .validation-message
+    {
+        display: block;
+
+        margin-top: 5px;
+
+        color: #dc2626;
+
+        font-size: 11px;
+    }
+
+
+    .validation-summary
+    {
+        margin: 15px 22px 0;
+
+        color: #dc2626;
+
+        font-size: 13px;
+    }
+
+
+    .form-actions
+    {
+        display: flex;
+
+        justify-content: flex-end;
+
+        gap: 10px;
+
+        padding: 20px 22px;
+
+        margin-top: 25px;
+
+        background: #f8fafc;
+
+        border-top: 1px solid #e2e8f0;
+    }
+
+
+    .cancel-btn,
+    .save-btn
+    {
+        padding: 11px 18px;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        text-decoration: none;
+
+        cursor: pointer;
+    }
+
+
+    .cancel-btn
+    {
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #cbd5e1;
+    }
+
+
+    .save-btn
+    {
+        background: #2563eb;
+
+        color: white;
+
+        border: 1px solid #2563eb;
+    }
+
+
+    .save-btn:hover
+    {
+        background: #1d4ed8;
+    }
+
+
+    @@media (max-width: 600px)
+    {
+        .page-header
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+
+        .form-actions
+        {
+            flex-direction: column;
+        }
+
+
+        .cancel-btn,
+        .save-btn
+        {
+            width: 100%;
+
+            text-align: center;
+
+            box-sizing: border-box;
+        }
+    }
+
+</style>

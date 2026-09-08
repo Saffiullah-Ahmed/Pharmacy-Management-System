@@ -1,0 +1,1617 @@
+@using PharmacyManagementSystem.Web.DataStorage
+@using PharmacyManagementSystem.Web.Models
+
+@{
+    ViewData["Title"] = "Reports";
+
+    DateTime fromDate =
+        (DateTime)(ViewBag.FromDate ?? DateTime.Today);
+
+    DateTime toDate =
+        (DateTime)(ViewBag.ToDate ?? DateTime.Today);
+
+    decimal totalSales =
+        (decimal)(ViewBag.TotalSales ?? 0);
+
+    decimal purchases =
+        (decimal)(ViewBag.Purchases ?? 0);
+
+    decimal refunds =
+        (decimal)(ViewBag.Refunds ?? 0);
+
+    decimal estimatedProfit =
+        (decimal)(ViewBag.EstimatedProfit ?? 0);
+
+    int saleCount =
+        (int)(ViewBag.SaleCount ?? 0);
+
+    int totalCustomers =
+        (int)(ViewBag.TotalCustomers ?? 0);
+
+    int totalMedicines =
+        (int)(ViewBag.TotalMedicines ?? 0);
+
+    decimal pendingCredit =
+        (decimal)(ViewBag.PendingCredit ?? 0);
+
+    int customersWithCredit =
+        (int)(ViewBag.CustomersWithCredit ?? 0);
+
+    var sales =
+        (List<Sale>)ViewBag.Sales;
+
+    var lowStockMedicines =
+        (List<Medicine>)ViewBag.LowStockMedicines;
+
+    var expiringMedicines =
+        (List<Medicine>)ViewBag.ExpiringMedicines;
+
+    var medicineSales =
+        (List<ReportStorage.MedicineSalesReport>)ViewBag.MedicineSales;
+
+    var supplierPurchases =
+        (List<ReportStorage.SupplierPurchaseReport>)ViewBag.SupplierPurchases;
+
+    var stockMovement =
+        (List<ReportStorage.StockMovementReport>)ViewBag.StockMovement;
+}
+
+
+<div class="reports-page">
+
+    <!-- ==========================================================
+         HEADER
+    ========================================================== -->
+
+    <div class="reports-header">
+
+        <div>
+            <h1>Reports</h1>
+
+            <p>
+                View pharmacy performance for any selected date range.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         DATE RANGE
+    ========================================================== -->
+
+    <div class="date-card">
+
+        <div class="date-card-content">
+
+            <div>
+                <h2>Report Period</h2>
+
+                <p>
+                    Select the start and end date for the report.
+                </p>
+            </div>
+
+
+            <form method="get"
+                  asp-action="Index"
+                  class="date-form">
+
+                <div class="date-field">
+
+                    <label>
+                        From Date
+                    </label>
+
+                    <input type="date"
+                           name="fromDate"
+                           value="@fromDate.ToString("yyyy-MM-dd")"
+                           max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           required />
+
+                </div>
+
+
+                <div class="date-arrow">
+                    →
+                </div>
+
+
+                <div class="date-field">
+
+                    <label>
+                        To Date
+                    </label>
+
+                    <input type="date"
+                           name="toDate"
+                           value="@toDate.ToString("yyyy-MM-dd")"
+                           max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                           required />
+
+                </div>
+
+
+                <button type="submit"
+                        class="view-btn">
+
+                    View Report
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <div class="selected-period">
+
+            Showing report from
+
+            <strong>
+                @fromDate.ToString("dd/MM/yyyy")
+            </strong>
+
+            to
+
+            <strong>
+                @toDate.ToString("dd/MM/yyyy")
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         SUMMARY
+    ========================================================== -->
+
+    <div class="section-title">
+
+        <div>
+            <h2>Financial Summary</h2>
+
+            <p>
+                Financial activity during the selected period.
+            </p>
+        </div>
+
+        <a asp-action="ExportCsv"
+           asp-route-fromDate="@fromDate.ToString("yyyy-MM-dd")"
+           asp-route-toDate="@toDate.ToString("yyyy-MM-dd")"
+           class="export-btn">
+
+            ↓ Export CSV
+
+        </a>
+
+    </div>
+
+
+    <div class="summary-grid">
+
+        <div class="summary-card blue">
+
+            <span>
+                Net Sales
+            </span>
+
+            <strong>
+                Rs. @totalSales.ToString("N2")
+            </strong>
+
+            <small>
+                After refunds
+            </small>
+
+        </div>
+
+
+        <div class="summary-card green">
+
+            <span>
+                Estimated Profit
+            </span>
+
+            <strong>
+                Rs. @estimatedProfit.ToString("N2")
+            </strong>
+
+            <small>
+                Based on average purchase cost
+            </small>
+
+        </div>
+
+
+        <div class="summary-card orange">
+
+            <span>
+                Purchases
+            </span>
+
+            <strong>
+                Rs. @purchases.ToString("N2")
+            </strong>
+
+            <small>
+                Medicine purchases
+            </small>
+
+        </div>
+
+
+        <div class="summary-card red">
+
+            <span>
+                Refunds
+            </span>
+
+            <strong>
+                Rs. @refunds.ToString("N2")
+            </strong>
+
+            <small>
+                Returns recorded
+            </small>
+
+        </div>
+
+
+        <div class="summary-card purple">
+
+            <span>
+                Transactions
+            </span>
+
+            <strong>
+                @saleCount
+            </strong>
+
+            <small>
+                Sales invoices
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         SALES TRANSACTIONS
+    ========================================================== -->
+
+    <div class="section-title">
+
+        <div>
+            <h2>Sales Transactions</h2>
+
+            <p>
+                Sales recorded during the selected date range.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="table-card">
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Invoice
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Total
+                        </th>
+
+                        <th>
+                            Discount
+                        </th>
+
+                        <th>
+                            Net Amount
+                        </th>
+
+                        <th>
+                            Received
+                        </th>
+
+                        <th>
+                            Balance
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @if (sales.Count == 0)
+                    {
+                        <tr>
+
+                            <td colspan="7"
+                                class="empty-cell">
+
+                                No sales found for this date range.
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var sale in sales)
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        @sale.InvoiceNumber
+                                    </strong>
+                                </td>
+
+
+                                <td>
+                                    @sale.SaleDate.ToString(
+                                        "dd/MM/yyyy hh:mm tt")
+                                </td>
+
+
+                                <td>
+                                    Rs. @sale.TotalAmount.ToString("N2")
+                                </td>
+
+
+                                <td>
+                                    Rs. @sale.DiscountAmount.ToString("N2")
+                                </td>
+
+
+                                <td>
+                                    <strong>
+                                        Rs. @sale.NetAmount.ToString("N2")
+                                    </strong>
+                                </td>
+
+
+                                <td>
+                                    Rs. @sale.AmountReceived.ToString("N2")
+                                </td>
+
+
+                                <td>
+
+                                    @if (sale.BalanceAmount > 0)
+                                    {
+                                        <span class="balance-badge">
+                                            Rs. @sale.BalanceAmount.ToString("N2")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="paid-badge">
+                                            Paid
+                                        </span>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         MEDICINE-WISE SALES
+    ========================================================== -->
+
+    <div class="section-title">
+
+        <div>
+            <h2>Medicine-Wise Sales</h2>
+
+            <p>
+                Medicines sold during the selected period.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="table-card">
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Medicine
+                        </th>
+
+                        <th>
+                            Quantity Sold
+                        </th>
+
+                        <th>
+                            Sales
+                        </th>
+
+                        <th>
+                            Estimated Cost
+                        </th>
+
+                        <th>
+                            Estimated Profit
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @if (medicineSales.Count == 0)
+                    {
+                        <tr>
+
+                            <td colspan="5"
+                                class="empty-cell">
+
+                                No medicine sales found.
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var medicine in medicineSales)
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        @medicine.MedicineName
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    @medicine.QuantitySold
+                                </td>
+
+                                <td>
+                                    Rs. @medicine.SalesAmount.ToString("N2")
+                                </td>
+
+                                <td>
+                                    Rs. @medicine.EstimatedCost.ToString("N2")
+                                </td>
+
+                                <td class="profit-cell">
+                                    Rs. @medicine.EstimatedProfit.ToString("N2")
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         SUPPLIER PURCHASES
+    ========================================================== -->
+
+    <div class="section-title">
+
+        <div>
+            <h2>Supplier Purchases</h2>
+
+            <p>
+                Purchases made during the selected period.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="table-card">
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Supplier
+                        </th>
+
+                        <th>
+                            Purchases
+                        </th>
+
+                        <th>
+                            Total Amount
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @if (supplierPurchases.Count == 0)
+                    {
+                        <tr>
+
+                            <td colspan="3"
+                                class="empty-cell">
+
+                                No purchases found.
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var supplier in supplierPurchases)
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        @supplier.SupplierName
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    @supplier.PurchaseCount
+                                </td>
+
+                                <td>
+                                    Rs. @supplier.TotalAmount.ToString("N2")
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         STOCK MOVEMENT
+    ========================================================== -->
+
+    <div class="section-title">
+
+        <div>
+            <h2>Stock Movement</h2>
+
+            <p>
+                Stock purchased and sold during the selected period.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="table-card">
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Medicine
+                        </th>
+
+                        <th>
+                            Purchased
+                        </th>
+
+                        <th>
+                            Sold
+                        </th>
+
+                        <th>
+                            Net Movement
+                        </th>
+
+                        <th>
+                            Current Stock
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @if (stockMovement.Count == 0)
+                    {
+                        <tr>
+
+                            <td colspan="5"
+                                class="empty-cell">
+
+                                No stock movement found.
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var stock in stockMovement)
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        @stock.MedicineName
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    @stock.PurchasedQuantity
+                                </td>
+
+                                <td>
+                                    @stock.SoldQuantity
+                                </td>
+
+                                <td>
+                                    @stock.NetMovement
+                                </td>
+
+                                <td>
+                                    <strong>
+                                        @stock.CurrentStock
+                                    </strong>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         CURRENT PHARMACY STATUS
+    ========================================================== -->
+
+    <div class="section-title">
+
+        <div>
+            <h2>Current Pharmacy Status</h2>
+
+            <p>
+                These values show the current live status of the pharmacy.
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="summary-grid status-grid">
+
+        <div class="summary-card">
+
+            <span>
+                Customers
+            </span>
+
+            <strong>
+                @totalCustomers
+            </strong>
+
+            <small>
+                Registered customers
+            </small>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Medicines
+            </span>
+
+            <strong>
+                @totalMedicines
+            </strong>
+
+            <small>
+                Medicines in pharmacy
+            </small>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Pending Credit
+            </span>
+
+            <strong>
+                Rs. @pendingCredit.ToString("N2")
+            </strong>
+
+            <small>
+                Outstanding balance
+            </small>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <span>
+                Customers With Credit
+            </span>
+
+            <strong>
+                @customersWithCredit
+            </strong>
+
+            <small>
+                Outstanding customers
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         LOW STOCK + EXPIRY
+    ========================================================== -->
+
+    <div class="two-column">
+
+        <!-- LOW STOCK -->
+
+        <div class="table-card">
+
+            <div class="table-header">
+
+                <div>
+
+                    <h3>
+                        Low Stock
+                    </h3>
+
+                    <p>
+                        Medicines with quantity ≤ 10
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Medicine
+                            </th>
+
+                            <th>
+                                Stock
+                            </th>
+
+                            <th>
+                                Expiry
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @if (lowStockMedicines.Count == 0)
+                        {
+                            <tr>
+
+                                <td colspan="3"
+                                    class="empty-cell">
+
+                                    No low-stock medicines.
+
+                                </td>
+
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var medicine in lowStockMedicines)
+                            {
+                                <tr>
+
+                                    <td>
+                                        <strong>
+                                            @medicine.Name
+                                        </strong>
+                                    </td>
+
+                                    <td>
+
+                                        <span class="stock-warning">
+                                            @medicine.Quantity
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        @(medicine.ExpiryDate.HasValue
+                                            ? medicine.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                            : "-")
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- EXPIRING -->
+
+        <div class="table-card">
+
+            <div class="table-header">
+
+                <div>
+
+                    <h3>
+                        Expiring Soon
+                    </h3>
+
+                    <p>
+                        Medicines expiring within 30 days
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Medicine
+                            </th>
+
+                            <th>
+                                Stock
+                            </th>
+
+                            <th>
+                                Expiry
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @if (expiringMedicines.Count == 0)
+                        {
+                            <tr>
+
+                                <td colspan="3"
+                                    class="empty-cell">
+
+                                    No medicines expiring soon.
+
+                                </td>
+
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var medicine in expiringMedicines)
+                            {
+                                <tr>
+
+                                    <td>
+                                        <strong>
+                                            @medicine.Name
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        @medicine.Quantity
+                                    </td>
+
+                                    <td>
+
+                                        <span class="expiry-warning">
+
+                                            @(medicine.ExpiryDate.HasValue
+                                                ? medicine.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                                : "-")
+
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    /* ==========================================================
+       PAGE
+    ========================================================== */
+
+    .reports-page
+    {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 0 40px;
+        box-sizing: border-box;
+    }
+
+
+    /* ==========================================================
+       HEADER
+    ========================================================== */
+
+    .reports-header
+    {
+        margin-bottom: 24px;
+    }
+
+
+    .reports-header h1
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 30px;
+        font-weight: 700;
+    }
+
+
+    .reports-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+
+    /* ==========================================================
+       DATE CARD
+    ========================================================== */
+
+    .date-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 28px;
+        box-shadow: 0 4px 16px rgba(15,23,42,.04);
+    }
+
+
+    .date-card-content
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 25px;
+    }
+
+
+    .date-card h2
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 18px;
+    }
+
+
+    .date-card p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    .date-form
+    {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+    }
+
+
+    .date-field
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+
+    .date-field label
+    {
+        color: #475569;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+
+    .date-field input
+    {
+        width: 155px;
+        box-sizing: border-box;
+        padding: 10px 11px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: white;
+        color: #172554;
+        outline: none;
+        font-size: 12px;
+    }
+
+
+    .date-field input:focus
+    {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+    }
+
+
+    .date-arrow
+    {
+        padding-bottom: 10px;
+        color: #94a3b8;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+
+    .view-btn
+    {
+        height: 37px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: #2563eb;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+
+    .view-btn:hover
+    {
+        background: #1d4ed8;
+    }
+
+
+    .selected-period
+    {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    .selected-period strong
+    {
+        color: #172554;
+    }
+
+
+    /* ==========================================================
+       SECTION TITLE
+    ========================================================== */
+
+    .section-title
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 28px 0 14px;
+    }
+
+
+    .section-title h2
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 19px;
+        font-weight: 800;
+    }
+
+
+    .section-title p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    /* ==========================================================
+       EXPORT
+    ========================================================== */
+
+    .export-btn
+    {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 15px;
+        border-radius: 8px;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #15803d;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+
+    .export-btn:hover
+    {
+        background: #dcfce7;
+    }
+
+
+    /* ==========================================================
+       SUMMARY
+    ========================================================== */
+
+    .summary-grid
+    {
+        display: grid;
+        grid-template-columns:
+            repeat(5, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+
+    .status-grid
+    {
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+    }
+
+
+    .summary-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 13px;
+        padding: 18px;
+        box-shadow: 0 3px 12px rgba(15,23,42,.04);
+        min-width: 0;
+    }
+
+
+    .summary-card.blue
+    {
+        border-top: 3px solid #2563eb;
+    }
+
+
+    .summary-card.green
+    {
+        border-top: 3px solid #16a34a;
+    }
+
+
+    .summary-card.orange
+    {
+        border-top: 3px solid #ea580c;
+    }
+
+
+    .summary-card.red
+    {
+        border-top: 3px solid #dc2626;
+    }
+
+
+    .summary-card.purple
+    {
+        border-top: 3px solid #7c3aed;
+    }
+
+
+    .summary-card span
+    {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+
+    .summary-card strong
+    {
+        display: block;
+        color: #172554;
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+
+    .summary-card small
+    {
+        display: block;
+        margin-top: 6px;
+        color: #94a3b8;
+        font-size: 10px;
+    }
+
+
+    /* ==========================================================
+       TABLE
+    ========================================================== */
+
+    .table-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 13px;
+        overflow: hidden;
+        box-shadow: 0 3px 12px rgba(15,23,42,.04);
+        margin-bottom: 18px;
+    }
+
+
+    .table-header
+    {
+        padding: 17px 18px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .table-header h3
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 15px;
+    }
+
+
+    .table-header p
+    {
+        margin: 4px 0 0;
+        color: #94a3b8;
+        font-size: 10px;
+    }
+
+
+    .table-wrapper
+    {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+
+    table
+    {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 700px;
+    }
+
+
+    th
+    {
+        padding: 12px 16px;
+        text-align: left;
+        background: #f8fafc;
+        color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        white-space: nowrap;
+    }
+
+
+    td
+    {
+        padding: 13px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #475569;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+
+    td strong
+    {
+        color: #172554;
+    }
+
+
+    tbody tr:hover
+    {
+        background: #f8fafc;
+    }
+
+
+    .empty-cell
+    {
+        padding: 30px;
+        text-align: center;
+        color: #94a3b8;
+    }
+
+
+    /* ==========================================================
+       BADGES
+    ========================================================== */
+
+    .paid-badge,
+    .balance-badge,
+    .stock-warning,
+    .expiry-warning
+    {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+
+    .paid-badge
+    {
+        background: #f0fdf4;
+        color: #15803d;
+    }
+
+
+    .balance-badge
+    {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+
+    .stock-warning
+    {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+
+    .expiry-warning
+    {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+
+    .profit-cell
+    {
+        color: #15803d !important;
+        font-weight: 700;
+    }
+
+
+    /* ==========================================================
+       TWO COLUMNS
+    ========================================================== */
+
+    .two-column
+    {
+        display: grid;
+        grid-template-columns:
+            1fr 1fr;
+        gap: 18px;
+    }
+
+
+    /* ==========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @@media (max-width: 1100px)
+    {
+        .date-card-content
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .summary-grid
+        {
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+        }
+
+        .status-grid
+        {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+    }
+
+
+    @@media (max-width: 800px)
+    {
+        .date-form
+        {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .date-field
+        {
+            flex: 1;
+        }
+
+        .date-field input
+        {
+            width: 100%;
+        }
+
+        .two-column
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-grid,
+        .status-grid
+        {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
+    }
+
+
+    @@media (max-width: 550px)
+    {
+        .reports-header h1
+        {
+            font-size: 25px;
+        }
+
+        .date-form
+        {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .date-arrow
+        {
+            display: none;
+        }
+
+        .summary-grid,
+        .status-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .section-title
+        {
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .export-btn
+        {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+
+</style>

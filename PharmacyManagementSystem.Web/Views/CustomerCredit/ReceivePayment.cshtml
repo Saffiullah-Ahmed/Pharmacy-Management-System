@@ -1,0 +1,676 @@
+@model PharmacyManagementSystem.Web.Models.CustomerPayment
+
+@{
+    ViewData["Title"] = "Receive Payment";
+
+    var customer =
+        ViewBag.Customer
+        as PharmacyManagementSystem.Web.Models.Customer;
+
+    var sale =
+        ViewBag.Sale
+        as PharmacyManagementSystem.Web.Models.Sale;
+
+    string paymentAmount =
+        Model.Amount > 0
+            ? Model.Amount.ToString("0.00")
+            : string.Empty;
+}
+
+<div class="payment-page">
+
+    <!-- ============================================================
+         HEADER
+    ============================================================ -->
+
+    <div class="payment-header">
+
+        <div>
+
+            <h1>
+                Receive Payment
+            </h1>
+
+            <p>
+                Record a payment against a pending invoice
+            </p>
+
+        </div>
+
+        <a asp-action="Details"
+           asp-route-id="@Model.CustomerId"
+           class="back-btn">
+
+            ← Back
+
+        </a>
+
+    </div>
+
+
+    <!-- ============================================================
+         FORM
+    ============================================================ -->
+
+    <form asp-action="ReceivePayment"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               asp-for="CustomerId" />
+
+        <input type="hidden"
+               asp-for="SaleId" />
+
+
+        <div class="payment-card">
+
+            <!-- ====================================================
+                 CUSTOMER
+            ==================================================== -->
+
+            <div class="customer-section">
+
+                <span>
+                    Customer
+                </span>
+
+                <strong>
+                    @customer?.Name
+                </strong>
+
+                <small>
+                    📞 @customer?.Phone
+                </small>
+
+                @if (!string.IsNullOrWhiteSpace(
+                    customer?.CNIC))
+                {
+                    <small>
+                        CNIC: @customer.CNIC
+                    </small>
+                }
+
+            </div>
+
+
+            <!-- ====================================================
+                 INVOICE
+            ==================================================== -->
+
+            <div class="invoice-section">
+
+                <div>
+
+                    <span>
+                        Invoice
+                    </span>
+
+                    <strong>
+                        @sale?.InvoiceNumber
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Invoice Date
+                    </span>
+
+                    <strong>
+                        @sale?.SaleDate.ToString(
+                            "dd/MM/yyyy")
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Invoice Total
+                    </span>
+
+                    <strong>
+                        Rs. @sale?.NetAmount.ToString("N2")
+                    </strong>
+
+                </div>
+
+
+                <div class="pending">
+
+                    <span>
+                        Pending Balance
+                    </span>
+
+                    <strong>
+                        Rs. @sale?.BalanceAmount.ToString("N2")
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- ====================================================
+                 VALIDATION
+            ==================================================== -->
+
+            <div asp-validation-summary="All"
+                 class="validation-summary">
+            </div>
+
+
+            <!-- ====================================================
+                 PAYMENT AMOUNT
+            ==================================================== -->
+
+            <div class="form-group">
+
+                <label asp-for="Amount">
+                    Payment Amount
+                </label>
+
+
+                <input type="number"
+                       id="Amount"
+                       name="Amount"
+                       value="@paymentAmount"
+                       step="0.01"
+                       min="0.01"
+                       max="@sale?.BalanceAmount"
+                       class="form-control"
+                       placeholder="Enter payment amount"
+                       autocomplete="off"
+                       required />
+
+
+                <small>
+                    Maximum payment:
+                    Rs. @sale?.BalanceAmount.ToString("N2")
+                </small>
+
+
+                <span asp-validation-for="Amount"
+                      class="validation-message">
+                </span>
+
+            </div>
+
+
+            <!-- ====================================================
+                 NOTES
+            ==================================================== -->
+
+            <div class="form-group">
+
+                <label asp-for="Notes">
+
+                    Notes
+
+                    <span class="optional">
+                        Optional
+                    </span>
+
+                </label>
+
+
+                <textarea asp-for="Notes"
+                          class="form-control"
+                          rows="3"
+                          maxlength="500"
+                          placeholder="Example: Cash received, bank transfer, partial payment..."></textarea>
+
+
+                <span asp-validation-for="Notes"
+                      class="validation-message">
+                </span>
+
+            </div>
+
+
+            <!-- ====================================================
+                 ACTIONS
+            ==================================================== -->
+
+            <div class="form-actions">
+
+                <a asp-action="Details"
+                   asp-route-id="@Model.CustomerId"
+                   class="cancel-btn">
+
+                    Cancel
+
+                </a>
+
+
+                <button type="submit"
+                        class="receive-btn">
+
+                    ✓ Receive Payment
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+<style>
+
+    /* ============================================================
+       PAGE
+    ============================================================ */
+
+    .payment-page
+    {
+        max-width: 750px;
+        margin: 0 auto;
+    }
+
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+
+    .payment-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        margin-bottom: 22px;
+    }
+
+
+    .payment-header h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 30px;
+    }
+
+
+    .payment-header p
+    {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 14px;
+    }
+
+
+    .back-btn
+    {
+        padding: 10px 15px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .back-btn:hover
+    {
+        background: #f8fafc;
+
+        color: #172554;
+    }
+
+
+    /* ============================================================
+       CARD
+    ============================================================ */
+
+    .payment-card
+    {
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 15px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+
+        overflow: hidden;
+    }
+
+
+    /* ============================================================
+       CUSTOMER
+    ============================================================ */
+
+    .customer-section
+    {
+        padding: 22px;
+
+        background: #eff6ff;
+
+        border-bottom: 1px solid #dbeafe;
+    }
+
+
+    .customer-section span,
+    .invoice-section span
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        margin-bottom: 5px;
+    }
+
+
+    .customer-section strong
+    {
+        display: block;
+
+        color: #172554;
+
+        font-size: 19px;
+    }
+
+
+    .customer-section small
+    {
+        display: block;
+
+        margin-top: 5px;
+
+        color: #64748b;
+    }
+
+
+    /* ============================================================
+       INVOICE
+    ============================================================ */
+
+    .invoice-section
+    {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 15px;
+
+        padding: 20px;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .invoice-section strong
+    {
+        color: #172554;
+
+        font-size: 14px;
+    }
+
+
+    .invoice-section .pending
+    {
+        padding: 12px;
+
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        border-radius: 9px;
+    }
+
+
+    .invoice-section .pending strong
+    {
+        color: #dc2626;
+
+        font-size: 18px;
+    }
+
+
+    /* ============================================================
+       FORM
+    ============================================================ */
+
+    .form-group
+    {
+        padding: 0 22px;
+
+        margin-top: 20px;
+    }
+
+
+    .form-group label
+    {
+        display: block;
+
+        margin-bottom: 7px;
+
+        color: #334155;
+
+        font-size: 12px;
+
+        font-weight: 700;
+    }
+
+
+    .optional
+    {
+        margin-left: 5px;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+
+        font-weight: 500;
+    }
+
+
+    .form-control
+    {
+        width: 100%;
+
+        box-sizing: border-box;
+
+        padding: 12px;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        outline: none;
+
+        color: #172554;
+
+        background: white;
+    }
+
+
+    textarea.form-control
+    {
+        resize: vertical;
+    }
+
+
+    .form-control:focus
+    {
+        border-color: #2563eb;
+
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
+    }
+
+
+    .form-group small
+    {
+        display: block;
+
+        margin-top: 6px;
+
+        color: #94a3b8;
+
+        font-size: 11px;
+    }
+
+
+    /* ============================================================
+       VALIDATION
+    ============================================================ */
+
+    .validation-summary
+    {
+        margin: 20px 22px 0;
+
+        color: #dc2626;
+
+        font-size: 13px;
+    }
+
+
+    .validation-message
+    {
+        color: #dc2626;
+
+        font-size: 11px;
+    }
+
+
+    /* ============================================================
+       ACTIONS
+    ============================================================ */
+
+    .form-actions
+    {
+        display: flex;
+
+        justify-content: flex-end;
+
+        gap: 10px;
+
+        padding: 20px 22px;
+
+        margin-top: 25px;
+
+        background: #f8fafc;
+
+        border-top: 1px solid #e2e8f0;
+    }
+
+
+    .cancel-btn,
+    .receive-btn
+    {
+        padding: 11px 18px;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        text-decoration: none;
+
+        cursor: pointer;
+    }
+
+
+    .cancel-btn
+    {
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #cbd5e1;
+    }
+
+
+    .receive-btn
+    {
+        background: #16a34a;
+
+        color: white;
+
+        border: 1px solid #16a34a;
+    }
+
+
+    .receive-btn:hover
+    {
+        background: #15803d;
+    }
+
+
+    /* ============================================================
+       MOBILE
+    ============================================================ */
+
+    @@media (max-width: 600px)
+    {
+        .payment-header
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+
+        .invoice-section
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .form-actions
+        {
+            flex-direction: column;
+        }
+
+
+        .cancel-btn,
+        .receive-btn
+        {
+            width: 100%;
+
+            text-align: center;
+
+            box-sizing: border-box;
+        }
+    }
+
+</style>

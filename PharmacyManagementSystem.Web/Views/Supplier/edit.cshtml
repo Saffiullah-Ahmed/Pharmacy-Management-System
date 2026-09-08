@@ -1,0 +1,184 @@
+@model PharmacyManagementSystem.Web.Models.Supplier
+
+@{
+    ViewData["Title"] = "Edit Supplier";
+}
+
+<div class="medicine-form-page">
+
+    <!-- PAGE HEADER -->
+    <div class="medicine-form-header">
+
+        <div>
+            <h1>Edit Supplier</h1>
+
+            <p>
+                Update supplier information
+            </p>
+        </div>
+
+        <a asp-controller="Supplier"
+           asp-action="Index"
+           class="back-medicine-btn">
+            ← Back to Suppliers
+        </a>
+
+    </div>
+
+
+    <!-- FORM CARD -->
+    <div class="medicine-form-card">
+
+        <div class="form-card-header">
+
+            <div class="form-icon">
+                ✏️
+            </div>
+
+            <div>
+                <h2>Supplier Information</h2>
+
+                <p>
+                    Update the supplier's contact and company details
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- VALIDATION SUMMARY -->
+        <div asp-validation-summary="ModelOnly"
+             class="validation-summary">
+        </div>
+
+
+        <form asp-action="Edit" method="post">
+
+            <!-- IMPORTANT: Supplier ID -->
+            <input type="hidden" asp-for="Id" />
+
+
+            <div class="medicine-form-grid">
+
+                <!-- SUPPLIER NAME -->
+                <div class="form-group">
+
+                    <label asp-for="Name">
+                        Supplier Name
+                    </label>
+
+                    <input asp-for="Name"
+                           class="form-control"
+                           placeholder="Enter supplier name" />
+
+                    <span asp-validation-for="Name"
+                          class="validation-message">
+                    </span>
+
+                </div>
+
+
+                <!-- COMPANY -->
+                <div class="form-group">
+
+                    <label asp-for="Company">
+                        Company
+                    </label>
+
+                    <input asp-for="Company"
+                           class="form-control"
+                           placeholder="Enter company name" />
+
+                    <span asp-validation-for="Company"
+                          class="validation-message">
+                    </span>
+
+                </div>
+
+
+                <!-- PHONE -->
+                <div class="form-group">
+
+                    <label asp-for="Phone">
+                        Phone Number
+                    </label>
+
+                    <input asp-for="Phone"
+                           class="form-control"
+                           placeholder="Enter phone number" />
+
+                    <span asp-validation-for="Phone"
+                          class="validation-message">
+                    </span>
+
+                </div>
+
+
+                <!-- EMAIL -->
+                <div class="form-group">
+
+                    <label asp-for="Email">
+                        Email Address
+                    </label>
+
+                    <input asp-for="Email"
+                           type="email"
+                           class="form-control"
+                           placeholder="Enter email address" />
+
+                    <span asp-validation-for="Email"
+                          class="validation-message">
+                    </span>
+
+                </div>
+
+
+                <!-- ADDRESS -->
+                <div class="form-group">
+
+                    <label asp-for="Address">
+                        Address
+                    </label>
+
+                    <input asp-for="Address"
+                           class="form-control"
+                           placeholder="Enter supplier address" />
+
+                    <span asp-validation-for="Address"
+                          class="validation-message">
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+            <div class="form-actions">
+
+                <a asp-controller="Supplier"
+                   asp-action="Index"
+                   class="cancel-btn">
+                    Cancel
+                </a>
+
+                <button type="submit"
+                        class="save-medicine-btn">
+                    ✓ Update Supplier
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,307 @@
+@model List<PharmacyManagementSystem.Web.Models.Supplier>
+
+@{
+    ViewData["Title"] = "Suppliers";
+}
+
+<div class="supplier-page">
+
+    <!-- PAGE HEADER -->
+    <div class="supplier-header">
+
+        <div>
+            <h1>Suppliers</h1>
+
+            <p>
+                Manage your pharmacy suppliers
+            </p>
+        </div>
+
+        <a asp-controller="Supplier"
+           asp-action="Create"
+           class="add-supplier-btn">
+
+            <span>＋</span>
+            Add Supplier
+
+        </a>
+
+    </div>
+
+
+    <!-- SUCCESS MESSAGE -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+            ✓ @TempData["SuccessMessage"]
+        </div>
+    }
+
+
+    <!-- ERROR MESSAGE -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+            ⚠ @TempData["ErrorMessage"]
+        </div>
+    }
+
+
+    <!-- SUMMARY -->
+    <div class="supplier-summary">
+
+        <div class="supplier-summary-card">
+
+            <div class="summary-icon supplier-icon">
+                🏢
+            </div>
+
+            <div>
+                <span>Total Suppliers</span>
+
+                <strong>
+                    @Model.Count
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- SEARCH -->
+    <div class="supplier-toolbar">
+
+        <div class="supplier-search">
+
+            <span>🔍</span>
+
+            <input type="text"
+                   id="supplierSearch"
+                   placeholder="Search supplier, company or contact..."
+                   onkeyup="searchSuppliers()" />
+
+        </div>
+
+    </div>
+
+
+    <!-- SUPPLIER TABLE -->
+    <div class="supplier-table-card">
+
+        <div class="table-header">
+
+            <div>
+                <h2>Supplier List</h2>
+
+                <p>
+                    All suppliers currently registered in your pharmacy
+                </p>
+            </div>
+
+            <span class="supplier-count">
+                @Model.Count suppliers
+            </span>
+
+        </div>
+
+
+        @if (Model.Count == 0)
+        {
+            <div class="supplier-empty">
+
+                <div class="empty-supplier-icon">
+                    🏢
+                </div>
+
+                <h3>No Suppliers Found</h3>
+
+                <p>
+                    Your supplier list is currently empty.
+                </p>
+
+                <a asp-controller="Supplier"
+                   asp-action="Create"
+                   class="add-supplier-btn">
+
+                    ＋ Add First Supplier
+
+                </a>
+
+            </div>
+        }
+        else
+        {
+            <div class="table-container">
+
+                <table class="supplier-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>ID</th>
+
+                            <th>Supplier</th>
+
+                            <th>Company</th>
+
+                            <th>Phone</th>
+
+                            <th>Email</th>
+
+                            <th>Address</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var supplier in Model)
+                        {
+                            <tr class="supplier-row">
+
+                                <!-- ID -->
+                                <td>
+                                    <span class="supplier-id">
+                                        #@supplier.Id
+                                    </span>
+                                </td>
+
+
+                                <!-- NAME -->
+                                <td>
+
+                                    <div class="supplier-name">
+
+                                        <div class="supplier-table-icon">
+                                            🏢
+                                        </div>
+
+                                        <div>
+
+                                            <strong>
+                                                @supplier.Name
+                                            </strong>
+
+                                            <small>
+                                                Supplier ID:
+                                                @supplier.Id
+                                            </small>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- COMPANY -->
+                                <td>
+
+                                    <span class="category-badge">
+                                        @supplier.Company
+                                    </span>
+
+                                </td>
+
+
+                                <!-- PHONE -->
+                                <td>
+                                    @supplier.Phone
+                                </td>
+
+
+                                <!-- EMAIL -->
+                                <td>
+                                    @supplier.Email
+                                </td>
+
+
+                                <!-- ADDRESS -->
+                                <td>
+                                    @supplier.Address
+                                </td>
+
+
+                                <!-- ACTIONS -->
+                                <td>
+
+                                    <div class="supplier-actions">
+
+                                        <a asp-controller="Supplier"
+                                           asp-action="Edit"
+                                           asp-route-id="@supplier.Id"
+                                           class="table-action edit-action"
+                                           title="Edit">
+                                            ✏️
+                                        </a>
+
+                                        <a asp-controller="Supplier"
+                                           asp-action="Delete"
+                                           asp-route-id="@supplier.Id"
+                                           class="table-action delete-action"
+                                           title="Delete">
+                                            🗑️
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        function searchSuppliers() {
+
+            const input =
+                document.getElementById("supplierSearch");
+
+            const filter =
+                input.value.toLowerCase();
+
+            const rows =
+                document.querySelectorAll(".supplier-row");
+
+            rows.forEach(function (row) {
+
+                const text =
+                    row.textContent.toLowerCase();
+
+                if (text.includes(filter)) {
+
+                    row.style.display = "";
+
+                }
+                else {
+
+                    row.style.display = "none";
+
+                }
+
+            });
+
+        }
+
+    </script>
+}

@@ -1,0 +1,843 @@
+@model List<PharmacyManagementSystem.Web.Models.Medicine>
+
+@{
+    ViewData["Title"] = "Medicine Management";
+
+    var totalMedicines = Model?.Count ?? 0;
+    var totalStock = Model?.Sum(x => x.Quantity) ?? 0;
+
+    var lowStockCount =
+        Model?.Count(x => x.Quantity > 0 && x.Quantity <= 10) ?? 0;
+
+    var expiredCount =
+        Model?.Count(x =>
+            x.ExpiryDate.HasValue &&
+            x.ExpiryDate.Value.Date < DateTime.Today) ?? 0;
+}
+
+<div class="medicine-page">
+
+    <!-- ==========================================
+         PAGE HEADER
+    ========================================== -->
+
+    <div class="medicine-header">
+
+        <div>
+            <h1>Medicine Management</h1>
+
+            <p>
+                Manage medicines, stock, expiry dates and company medicine IDs
+            </p>
+        </div>
+
+        <a asp-controller="Medicine"
+           asp-action="Create"
+           class="add-medicine-btn">
+
+            <span>＋</span>
+
+            Add Medicine
+
+        </a>
+
+    </div>
+
+
+    <!-- ==========================================
+         SUCCESS MESSAGE
+    ========================================== -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+
+            ✓ @TempData["SuccessMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         ERROR MESSAGE
+    ========================================== -->
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+
+            ⚠ @TempData["ErrorMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================
+         SUMMARY CARDS
+    ========================================== -->
+
+    <div class="medicine-summary">
+
+        <!-- TOTAL MEDICINES -->
+
+        <div class="medicine-summary-card">
+
+            <div class="summary-icon medicine-icon">
+                💊
+            </div>
+
+            <div>
+
+                <span>Total Medicines</span>
+
+                <strong>
+                    @totalMedicines
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL STOCK -->
+
+        <div class="medicine-summary-card">
+
+            <div class="summary-icon stock-icon">
+                📦
+            </div>
+
+            <div>
+
+                <span>Total Stock</span>
+
+                <strong>
+                    @totalStock
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- LOW STOCK -->
+
+        <div class="medicine-summary-card">
+
+            <div class="summary-icon warning-icon">
+                ⚠️
+            </div>
+
+            <div>
+
+                <span>Low Stock</span>
+
+                <strong>
+                    @lowStockCount
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- EXPIRED -->
+
+        <div class="medicine-summary-card">
+
+            <div class="summary-icon expiry-icon">
+                ⏰
+            </div>
+
+            <div>
+
+                <span>Expired</span>
+
+                <strong>
+                    @expiredCount
+                </strong>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         SEARCH TOOLBAR
+    ========================================== -->
+
+    <div class="medicine-toolbar">
+
+        <div class="medicine-search-select">
+
+            <select id="medicineSearchType">
+
+                <option value="all">
+                    Search All
+                </option>
+
+                <option value="id">
+                    Medicine ID
+                </option>
+
+                <option value="companyId">
+                    Company Medicine ID
+                </option>
+
+                <option value="name">
+                    Medicine Name
+                </option>
+
+                <option value="category">
+                    Category
+                </option>
+
+                <option value="company">
+                    Company
+                </option>
+
+                <option value="formula">
+                    Formula
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="medicine-search">
+
+            <span>🔍</span>
+
+            <input type="text"
+                   id="medicineSearchInput"
+                   placeholder="Search medicine..."
+                   autocomplete="off" />
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================
+         MEDICINE TABLE
+    ========================================== -->
+
+    <div class="medicine-table-card">
+
+        <!-- TABLE HEADER -->
+
+        <div class="table-header">
+
+            <div>
+
+                <h2>Medicine List</h2>
+
+                <p>
+                    All medicines registered in your pharmacy
+                </p>
+
+            </div>
+
+            <span class="medicine-count"
+                  id="medicineCount">
+
+                @totalMedicines medicines
+
+            </span>
+
+        </div>
+
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-container">
+
+                <table class="medicine-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                ID
+                            </th>
+
+                            <th>
+                                Company Medicine ID
+                            </th>
+
+                            <th>
+                                Medicine
+                            </th>
+
+                            <th>
+                                Category
+                            </th>
+
+                            <th>
+                                Company
+                            </th>
+
+                            <th>
+                                Formula
+                            </th>
+
+                            <th>
+                                Strength
+                            </th>
+
+                            <th>
+                                Price
+                            </th>
+
+                            <th>
+                                Quantity
+                            </th>
+
+                            <th>
+                                Expiry Date
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="medicineTableBody">
+
+                        @foreach (var medicine in Model)
+                        {
+                            var isExpired =
+                                medicine.ExpiryDate.HasValue &&
+                                medicine.ExpiryDate.Value.Date < DateTime.Today;
+
+                            var isExpiringSoon =
+                                medicine.ExpiryDate.HasValue &&
+                                medicine.ExpiryDate.Value.Date >= DateTime.Today &&
+                                medicine.ExpiryDate.Value.Date <= DateTime.Today.AddDays(30);
+
+                            var isLowStock =
+                                medicine.Quantity > 0 &&
+                                medicine.Quantity <= 10;
+
+                            var searchCompanyMedicineId =
+                                medicine.CompanyMedicineId?.ToString() ?? "";
+
+                            <tr class="medicine-row"
+
+                                data-id="@medicine.Id"
+
+                                data-company-id="@searchCompanyMedicineId"
+
+                                data-name="@(medicine.Name ?? "")"
+
+                                data-category="@(medicine.Category ?? "")"
+
+                                data-company="@(medicine.Company ?? "")"
+
+                                data-formula="@(medicine.Formula ?? "")">
+
+
+                                <!-- ==================================
+                                     SYSTEM ID
+                                ================================== -->
+
+                                <td>
+
+                                    <span class="medicine-id">
+                                        #@medicine.Id
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     COMPANY MEDICINE ID
+                                ================================== -->
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(searchCompanyMedicineId))
+                                    {
+                                        <span class="company-id-badge">
+
+                                            @searchCompanyMedicineId
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="not-provided">
+                                            Not provided
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     MEDICINE NAME
+                                ================================== -->
+
+                                <td>
+
+                                    <div class="medicine-name">
+
+                                        <div class="medicine-table-icon">
+                                            💊
+                                        </div>
+
+                                        <div>
+
+                                            <strong>
+                                                @medicine.Name
+                                            </strong>
+
+                                            <small>
+                                                ID: @medicine.Id
+                                            </small>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     CATEGORY
+                                ================================== -->
+
+                                <td>
+
+                                    <span class="category-badge">
+
+                                        @medicine.Category
+
+                                    </span>
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     COMPANY
+                                ================================== -->
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(medicine.Company))
+                                    {
+                                        @medicine.Company
+                                    }
+                                    else
+                                    {
+                                        <span class="not-provided">
+                                            Not provided
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     FORMULA
+                                ================================== -->
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(medicine.Formula))
+                                    {
+                                        @medicine.Formula
+                                    }
+                                    else
+                                    {
+                                        <span class="not-provided">
+                                            Not provided
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     STRENGTH / MG
+                                ================================== -->
+
+                                <td>
+
+                                    @if (!string.IsNullOrWhiteSpace(medicine.Mg))
+                                    {
+                                        @medicine.Mg
+                                    }
+                                    else
+                                    {
+                                        <span class="not-provided">
+                                            Not provided
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     PRICE
+                                ================================== -->
+
+                                <td>
+
+                                    <strong>
+                                        Rs. @medicine.Price.ToString("N2")
+                                    </strong>
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     QUANTITY
+                                ================================== -->
+
+                                <td>
+
+                                    @if (medicine.Quantity <= 0)
+                                    {
+                                        <span class="status-badge status-expired">
+                                            Out of Stock
+                                        </span>
+                                    }
+                                    else if (isLowStock)
+                                    {
+                                        <span class="status-badge stock-low">
+                                            @medicine.Quantity
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge stock-good">
+                                            @medicine.Quantity
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     EXPIRY DATE
+                                ================================== -->
+
+                                <td>
+
+                                    @if (medicine.ExpiryDate.HasValue)
+                                    {
+                                        <span>
+                                            @medicine.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="not-provided">
+                                            Not provided
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     STATUS
+                                ================================== -->
+
+                                <td>
+
+                                    @if (isExpired)
+                                    {
+                                        <span class="status-badge status-expired">
+                                            Expired
+                                        </span>
+                                    }
+                                    else if (isExpiringSoon)
+                                    {
+                                        <span class="status-badge status-warning">
+                                            Expiring Soon
+                                        </span>
+                                    }
+                                    else if (medicine.Quantity <= 0)
+                                    {
+                                        <span class="status-badge status-expired">
+                                            Out of Stock
+                                        </span>
+                                    }
+                                    else if (isLowStock)
+                                    {
+                                        <span class="status-badge stock-low">
+                                            Low Stock
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge stock-good">
+                                            Available
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- ==================================
+                                     ACTIONS
+                                ================================== -->
+
+                                <td>
+
+                                    <div class="medicine-actions">
+
+                                        <a asp-controller="Medicine"
+                                           asp-action="Edit"
+                                           asp-route-id="@medicine.Id"
+                                           class="table-action edit-action"
+                                           title="Edit Medicine">
+
+                                            ✏️
+
+                                        </a>
+
+
+                                        <a asp-controller="Medicine"
+                                           asp-action="Delete"
+                                           asp-route-id="@medicine.Id"
+                                           class="table-action delete-action"
+                                           title="Delete Medicine">
+
+                                            🗑️
+
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ==========================================
+                 NO SEARCH RESULTS
+            ========================================== -->
+
+            <div id="noSearchResults"
+                 class="medicine-empty"
+                 style="display:none;">
+
+                <div class="empty-medicine-icon">
+                    🔍
+                </div>
+
+                <h3>
+                    No medicines found
+                </h3>
+
+                <p>
+                    Try a different search term.
+                </p>
+
+            </div>
+        }
+        else
+        {
+            <!-- ==========================================
+                 EMPTY DATABASE
+            ========================================== -->
+
+            <div class="medicine-empty">
+
+                <div class="empty-medicine-icon">
+                    💊
+                </div>
+
+                <h3>
+                    No medicines found
+                </h3>
+
+                <p>
+                    Start by adding your first medicine.
+                </p>
+
+                <a asp-controller="Medicine"
+                   asp-action="Create"
+                   class="add-medicine-btn">
+
+                    <span>＋</span>
+
+                    Add Medicine
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        document.addEventListener("DOMContentLoaded", function ()
+        {
+            const searchInput =
+                document.getElementById("medicineSearchInput");
+
+            const searchType =
+                document.getElementById("medicineSearchType");
+
+            const tableBody =
+                document.getElementById("medicineTableBody");
+
+            const noResults =
+                document.getElementById("noSearchResults");
+
+            const countElement =
+                document.getElementById("medicineCount");
+
+
+            if (!searchInput ||
+                !searchType ||
+                !tableBody)
+            {
+                return;
+            }
+
+
+            function searchMedicines()
+            {
+                const searchValue =
+                    searchInput.value
+                        .trim()
+                        .toLowerCase();
+
+                const selectedType =
+                    searchType.value;
+
+                const rows =
+                    tableBody.querySelectorAll(".medicine-row");
+
+                let visibleCount = 0;
+
+
+                rows.forEach(function (row)
+                {
+                    let value = "";
+
+
+                    if (selectedType === "id")
+                    {
+                        value =
+                            row.dataset.id || "";
+                    }
+                    else if (selectedType === "companyId")
+                    {
+                        value =
+                            row.dataset.companyId || "";
+                    }
+                    else if (selectedType === "name")
+                    {
+                        value =
+                            row.dataset.name || "";
+                    }
+                    else if (selectedType === "category")
+                    {
+                        value =
+                            row.dataset.category || "";
+                    }
+                    else if (selectedType === "company")
+                    {
+                        value =
+                            row.dataset.company || "";
+                    }
+                    else if (selectedType === "formula")
+                    {
+                        value =
+                            row.dataset.formula || "";
+                    }
+                    else
+                    {
+                        value =
+                            (row.dataset.id || "") + " " +
+                            (row.dataset.companyId || "") + " " +
+                            (row.dataset.name || "") + " " +
+                            (row.dataset.category || "") + " " +
+                            (row.dataset.company || "") + " " +
+                            (row.dataset.formula || "");
+                    }
+
+
+                    const matches =
+                        value
+                            .toLowerCase()
+                            .includes(searchValue);
+
+
+                    if (matches)
+                    {
+                        row.style.display = "";
+                        visibleCount++;
+                    }
+                    else
+                    {
+                        row.style.display = "none";
+                    }
+
+                });
+
+
+                if (countElement)
+                {
+                    countElement.textContent =
+                        visibleCount + " medicines";
+                }
+
+
+                if (noResults)
+                {
+                    noResults.style.display =
+                        visibleCount === 0
+                            ? "flex"
+                            : "none";
+                }
+
+            }
+
+
+            searchInput.addEventListener(
+                "input",
+                searchMedicines
+            );
+
+
+            searchType.addEventListener(
+                "change",
+                searchMedicines
+            );
+
+        });
+
+    </script>
+}

@@ -1,0 +1,620 @@
+﻿@model PharmacyManagementSystem.Web.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard">
+
+    <!-- ==========================================
+         MAIN CONTENT
+    ========================================== -->
+
+    <main class="main-content">
+
+
+        <!-- ==========================================
+             TOP BAR
+        ========================================== -->
+
+        <header class="topbar">
+
+            <div>
+
+                <h1 style="font-weight: 700;">
+                    Dashboard
+                </h1>
+
+                <p>
+                    Welcome back! Here's what's happening today.
+                </p>
+
+            </div>
+
+
+            <div class="profile">
+
+                <div class="notification">
+                    🔔
+                </div>
+
+                <div class="profile-info">
+
+                    <strong>
+                        Pharmacist
+                    </strong>
+
+                    <span>
+                        Administrator
+                    </span>
+
+                </div>
+
+                <div class="profile-avatar">
+                    P
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ==========================================
+             STATISTICS
+        ========================================== -->
+
+        <section class="stats-grid">
+
+
+            <!-- TOTAL MEDICINES -->
+
+            <a asp-controller="Medicine"
+               asp-action="Index"
+               class="stat-card dashboard-link">
+
+                <div class="stat-icon">
+                    💊
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Medicines
+                    </span>
+
+                    <h2>
+                        @Model.TotalMedicines
+                    </h2>
+
+                    <small>
+                        Medicines in inventory
+                    </small>
+
+                </div>
+
+            </a>
+
+
+            <!-- TODAY'S SALES -->
+
+            <a asp-controller="Sale"
+               asp-action="Index"
+               class="stat-card dashboard-link">
+
+                <div class="stat-icon">
+                    🛒
+                </div>
+
+                <div>
+
+                    <span>
+                        Today's Sales
+                    </span>
+
+                    <h2>
+                        Rs. @Model.TodaySales.ToString("N2")
+                    </h2>
+
+                    <small>
+                        Sales generated today
+                    </small>
+
+                </div>
+
+            </a>
+
+
+            <!-- LOW STOCK -->
+
+            <a asp-controller="Medicine"
+               asp-action="Index"
+               class="stat-card dashboard-link">
+
+                <div class="stat-icon">
+                    ⚠️
+                </div>
+
+                <div>
+
+                    <span>
+                        Low Stock
+                    </span>
+
+                    <h2>
+                        @Model.LowStockMedicines
+                    </h2>
+
+                    <small>
+                        Medicines need attention
+                    </small>
+
+                </div>
+
+            </a>
+
+
+            <!-- EXPIRING SOON -->
+
+            <a asp-controller="Medicine"
+               asp-action="Index"
+               class="stat-card dashboard-link">
+
+                <div class="stat-icon">
+                    ⏰
+                </div>
+
+                <div>
+
+                    <span>
+                        Expiring Soon
+                    </span>
+
+                    <h2>
+                        @Model.ExpiringSoonMedicines
+                    </h2>
+
+                    <small>
+                        Within 30 days
+                    </small>
+
+                </div>
+
+            </a>
+
+
+        </section>
+
+
+        <!-- ==========================================
+             CONTENT CARDS
+        ========================================== -->
+
+        <section class="dashboard-grid">
+
+
+            <!-- ==========================================
+                 QUICK ACTIONS
+            ========================================== -->
+        
+            <!-- Quick Actions -->
+
+            <div class="dashboard-card">
+
+                <div class="card-header">
+
+                    <div>
+                        <h2>Quick Actions</h2>
+
+                        <p>
+                            Common pharmacy operations
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="quick-actions">
+
+                    <!-- ADD MEDICINE -->
+
+                    <a asp-controller="Medicine"
+                    asp-action="Create"
+                    class="action-button">
+
+                        <span>➕</span>
+
+                        <div>
+                            <strong>
+                                Add Medicine
+                            </strong>
+
+                            <small>
+                                Add new medicine to inventory
+                            </small>
+                        </div>
+
+                    </a>
+
+
+                    <!-- NEW SALE -->
+
+                    <a asp-controller="Sale"
+                    asp-action="Create"
+                    class="action-button">
+
+                        <span>🛒</span>
+
+                        <div>
+                            <strong>
+                                New Sale
+                            </strong>
+
+                            <small>
+                                Create a new medicine sale
+                            </small>
+                        </div>
+
+                    </a>
+
+
+                    <!-- PURCHASE -->
+
+                    <a asp-controller="Purchase"
+                    asp-action="Create"
+                    class="action-button">
+
+                        <span>📦</span>
+
+                        <div>
+                            <strong>
+                                Purchase
+                            </strong>
+
+                            <small>
+                                Record medicine purchase
+                            </small>
+                        </div>
+
+                    </a>
+
+
+                    <!-- RETURN MEDICINE -->
+
+                    <a asp-controller="Return"
+                    asp-action="Create"
+                    class="action-button">
+
+                        <span>↩️</span>
+
+                        <div>
+                            <strong>
+                                Return Medicine
+                            </strong>
+
+                            <small>
+                                Process a medicine return
+                            </small>
+                        </div>
+
+                    </a>
+
+                </div>
+
+            </div>
+            <!-- ==========================================
+                 INVENTORY ALERTS
+            ========================================== -->
+
+            <div class="dashboard-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h2>
+                            Inventory Alerts
+                        </h2>
+
+                        <p>
+                            Items requiring attention
+                        </p>
+
+                    </div>
+
+
+                    <span class="alert-count">
+
+                        @(Model.LowStockMedicines +
+                          Model.ExpiringSoonMedicines)
+
+                    </span>
+
+                </div>
+
+
+                <div class="empty-state">
+
+                    @if (Model.LowStockMedicines == 0 &&
+                         Model.ExpiringSoonMedicines == 0)
+                    {
+                        <div class="empty-icon">
+                            ✓
+                        </div>
+
+                        <h3>
+                            All Good!
+                        </h3>
+
+                        <p>
+                            No inventory alerts at the moment.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="empty-icon">
+                            ⚠️
+                        </div>
+
+                        <h3>
+                            Attention Required
+                        </h3>
+
+                        <p>
+                            Some medicines need your attention.
+                        </p>
+                    }
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ==========================================
+             RECENT SALES
+        ========================================== -->
+
+        <section class="dashboard-card recent-sales">
+
+
+            <div class="card-header">
+
+                <div>
+
+                    <h2>
+                        Recent Sales
+                    </h2>
+
+                    <p>
+                        Latest transactions
+                    </p>
+
+                </div>
+
+
+                <a asp-controller="Sale"
+                   asp-action="Index">
+
+                    View All →
+
+                </a>
+
+            </div>
+
+
+            @if (Model.TotalSales > 0)
+            {
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        🧾
+                    </div>
+
+                    <h3>
+                        @Model.TotalSales Sales Recorded
+                    </h3>
+
+                    <p>
+                        Your sales data is connected successfully.
+                    </p>
+
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        🧾
+                    </div>
+
+                    <h3>
+                        No Recent Sales
+                    </h3>
+
+                    <p>
+                        Sales transactions will appear here.
+                    </p>
+
+                </div>
+            }
+
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+<style>
+
+    /* ==========================================
+       DASHBOARD LINKS
+    ========================================== */
+
+    .dashboard-link
+    {
+        text-decoration: none;
+
+        color: inherit;
+
+        cursor: pointer;
+
+        transition: .2s;
+    }
+
+
+    .dashboard-link:hover
+    {
+        text-decoration: none;
+
+        color: inherit;
+
+        transform: translateY(-2px);
+
+        box-shadow:
+            0 6px 20px
+            rgba(15,23,42,.08);
+    }
+
+
+    /* ==========================================
+       QUICK ACTION BUTTONS
+    ========================================== */
+
+    .action-button
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
+
+        width: 100%;
+
+        box-sizing: border-box;
+
+        padding: 15px;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 10px;
+
+        color: #172554;
+
+        text-decoration: none;
+
+        cursor: pointer;
+
+        text-align: left;
+
+        transition: .2s;
+    }
+
+
+    .action-button:hover
+    {
+        background: #f8fafc;
+
+        border-color: #cbd5e1;
+
+        color: #172554;
+
+        text-decoration: none;
+
+        transform: translateY(-1px);
+    }
+
+
+    .action-button > span
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 40px;
+
+        height: 40px;
+
+        flex-shrink: 0;
+
+        background: #f8fafc;
+
+        border-radius: 9px;
+
+        font-size: 19px;
+    }
+
+
+    .action-button strong
+    {
+        display: block;
+
+        color: #172554;
+
+        font-size: 13px;
+    }
+
+
+    .action-button small
+    {
+        display: block;
+
+        margin-top: 4px;
+
+        color: #64748b;
+
+        font-size: 11px;
+    }
+
+
+    /* ==========================================
+       RECENT SALES LINK
+    ========================================== */
+
+    .recent-sales .card-header a
+    {
+        color: #2563eb;
+
+        text-decoration: none;
+
+        font-size: 12px;
+
+        font-weight: 600;
+    }
+
+
+    .recent-sales .card-header a:hover
+    {
+        color: #1d4ed8;
+
+        text-decoration: none;
+    }
+
+
+    /* ==========================================
+       MOBILE
+    ========================================== */
+
+    @@media (max-width: 700px)
+    {
+        .dashboard-link
+        {
+            width: 100%;
+        }
+
+        .action-button
+        {
+            width: 100%;
+        }
+    }
+
+</style>

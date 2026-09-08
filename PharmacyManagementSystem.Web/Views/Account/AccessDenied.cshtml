@@ -1,0 +1,285 @@
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="access-denied-page">
+
+    <div class="access-denied-card">
+
+        <div class="access-denied-icon">
+            🔒
+        </div>
+
+        <h1>
+            Access Denied
+        </h1>
+
+        <p class="main-message">
+            You do not have permission to access this page.
+        </p>
+
+        <p class="sub-message">
+            Your account does not have the required permission
+            to perform this action.
+        </p>
+
+        <div class="access-denied-actions">
+
+            <a asp-controller="Home"
+               asp-action="Index"
+               class="primary-btn">
+
+                ← Back to Dashboard
+
+            </a>
+
+            <a href="javascript:history.back()"
+               class="secondary-btn">
+
+                Go Back
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    /* ==========================================
+       PAGE
+    ========================================== */
+
+    .access-denied-page
+    {
+        min-height: 70vh;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 30px 20px;
+
+        box-sizing: border-box;
+    }
+
+
+    /* ==========================================
+       CARD
+    ========================================== */
+
+    .access-denied-card
+    {
+        width: 100%;
+
+        max-width: 520px;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 18px;
+
+        padding: 45px 35px;
+
+        text-align: center;
+
+        box-shadow:
+            0 8px 30px
+            rgba(15, 23, 42, 0.08);
+    }
+
+
+    /* ==========================================
+       ICON
+    ========================================== */
+
+    .access-denied-icon
+    {
+        width: 75px;
+
+        height: 75px;
+
+        margin: 0 auto 22px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        border-radius: 50%;
+
+        font-size: 34px;
+    }
+
+
+    /* ==========================================
+       TITLE
+    ========================================== */
+
+    .access-denied-card h1
+    {
+        margin: 0 0 12px;
+
+        color: #172554;
+
+        font-size: 28px;
+
+        font-weight: 700;
+    }
+
+
+    /* ==========================================
+       MESSAGE
+    ========================================== */
+
+    .main-message
+    {
+        margin: 0 0 8px;
+
+        color: #334155;
+
+        font-size: 15px;
+
+        font-weight: 600;
+    }
+
+
+    .sub-message
+    {
+        margin: 0 auto 28px;
+
+        max-width: 400px;
+
+        color: #64748b;
+
+        font-size: 13px;
+
+        line-height: 1.6;
+    }
+
+
+    /* ==========================================
+       BUTTONS
+    ========================================== */
+
+    .access-denied-actions
+    {
+        display: flex;
+
+        justify-content: center;
+
+        gap: 10px;
+
+        flex-wrap: wrap;
+    }
+
+
+    .primary-btn
+    {
+        display: inline-block;
+
+        padding: 11px 18px;
+
+        background: #2563eb;
+
+        color: white;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        transition: 0.2s;
+    }
+
+
+    .primary-btn:hover
+    {
+        background: #1d4ed8;
+
+        color: white;
+    }
+
+
+    .secondary-btn
+    {
+        display: inline-block;
+
+        padding: 11px 18px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        transition: 0.2s;
+    }
+
+
+    .secondary-btn:hover
+    {
+        background: #f8fafc;
+
+        color: #172554;
+    }
+
+
+    /* ==========================================
+       MOBILE
+    ========================================== */
+
+    @@media (max-width: 600px)
+    {
+        .access-denied-page
+        {
+            padding: 20px 10px;
+        }
+
+
+        .access-denied-card
+        {
+            padding: 35px 22px;
+        }
+
+
+        .access-denied-actions
+        {
+            flex-direction: column;
+        }
+
+
+        .primary-btn,
+        .secondary-btn
+        {
+            width: 100%;
+
+            box-sizing: border-box;
+
+            text-align: center;
+        }
+    }
+
+</style>

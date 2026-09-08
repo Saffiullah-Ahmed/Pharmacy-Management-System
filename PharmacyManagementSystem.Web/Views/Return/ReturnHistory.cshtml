@@ -1,0 +1,722 @@
+@model List<PharmacyManagementSystem.Web.Models.SaleReturn>
+
+@{
+    ViewData["Title"] = "Return History";
+
+    decimal totalRefund =
+        Model.Sum(x => x.TotalRefund);
+}
+
+
+<div class="history-page">
+
+    <!-- ==========================================================
+         HEADER
+    ========================================================== -->
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>
+                Return History
+            </h1>
+
+            <p>
+                View medicine returns and refund records.
+            </p>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <a asp-controller="Sale"
+               asp-action="Index"
+               class="secondary-btn">
+
+                ← Sales History
+
+            </a>
+
+
+            <a asp-controller="Return"
+               asp-action="Create"
+               class="primary-btn">
+
+                + New Return
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         MESSAGES
+    ========================================================== -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+
+            ✓ @TempData["SuccessMessage"]
+
+        </div>
+    }
+
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+
+            ⚠ @TempData["ErrorMessage"]
+
+        </div>
+    }
+
+
+    <!-- ==========================================================
+         SUMMARY
+    ========================================================== -->
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+
+            <span>
+                Total Returns
+            </span>
+
+            <strong>
+                @Model.Count
+            </strong>
+
+        </div>
+
+
+        <div class="summary-card refund-card">
+
+            <span>
+                Total Refund
+            </span>
+
+            <strong>
+                Rs. @totalRefund.ToString("N2")
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================
+         HISTORY TABLE
+    ========================================================== -->
+
+    <div class="history-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h2>
+                    Return Records
+                </h2>
+
+                <p>
+                    All medicine returns belonging to this pharmacy.
+                </p>
+
+            </div>
+
+
+            <div class="search-box">
+
+                <input type="text"
+                       id="returnSearch"
+                       placeholder="Search invoice..."
+                       autocomplete="off"
+                       oninput="searchReturns()" />
+
+            </div>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table class="return-history-table">
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>Invoice</th>
+
+                        <th>Return Date</th>
+
+                        <th>Medicines</th>
+
+                        <th>Refund</th>
+
+                        <th>Reason</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="returnTableBody">
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+
+                            <td colspan="6"
+                                class="empty-row">
+
+                                No return records found.
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (
+                            var returnRecord in
+                            Model.OrderByDescending(
+                                x => x.ReturnDate))
+                        {
+                            <tr>
+
+                                <td>
+                                    @returnRecord.Id
+                                </td>
+
+
+                                <td>
+
+                                    <a asp-controller="Sale"
+                                       asp-action="Bill"
+                                       asp-route-id="@returnRecord.SaleId"
+                                       class="invoice-link">
+
+                                        Sale #@returnRecord.SaleId
+
+                                    </a>
+
+                                </td>
+
+
+                                <td>
+                                    @returnRecord.ReturnDate.ToString(
+                                        "dd/MM/yyyy hh:mm tt")
+                                </td>
+
+
+                                <td>
+
+                                    <span class="medicine-count">
+
+                                        @(returnRecord.Items?.Sum(
+                                            x => x.Quantity) ?? 0)
+
+                                    </span>
+
+                                    item(s)
+
+                                </td>
+
+
+                                <td>
+
+                                    <strong class="refund-text">
+
+                                        Rs.
+                                        @returnRecord.TotalRefund.ToString("N2")
+
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    @if (string.IsNullOrWhiteSpace(
+                                        returnRecord.Reason))
+                                    {
+                                        <span class="no-reason">
+                                            No reason provided
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @returnRecord.Reason
+                                        </span>
+                                    }
+
+                                </td>
+
+                            </tr>
+
+
+                            @if (returnRecord.Items != null &&
+                                 returnRecord.Items.Any())
+                            {
+                                <tr class="items-row">
+
+                                    <td></td>
+
+                                    <td colspan="5">
+
+                                        <div class="returned-items">
+
+                                            @foreach (
+                                                var item in
+                                                returnRecord.Items)
+                                            {
+                                                <span class="returned-item">
+
+                                                    @item.MedicineName
+                                                    ×
+                                                    @item.Quantity
+
+                                                </span>
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        function searchReturns()
+        {
+            const search =
+                document
+                    .getElementById("returnSearch")
+                    .value
+                    .toLowerCase()
+                    .trim();
+
+
+            const rows =
+                document.querySelectorAll(
+                    "#returnTableBody tr");
+
+
+            rows.forEach(function(row)
+            {
+                const text =
+                    row.textContent.toLowerCase();
+
+
+                row.style.display =
+                    text.includes(search)
+                        ? ""
+                        : "none";
+            });
+        }
+
+    </script>
+}
+
+
+<style>
+
+    .history-page
+    {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+
+    .page-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 22px;
+    }
+
+
+    .page-header h1
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 30px;
+    }
+
+
+    .page-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+
+    .header-actions
+    {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+    }
+
+
+    .primary-btn,
+    .secondary-btn
+    {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 15px;
+        border-radius: 9px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .primary-btn
+    {
+        background: #2563eb;
+        color: white;
+    }
+
+
+    .primary-btn:hover
+    {
+        background: #1d4ed8;
+    }
+
+
+    .secondary-btn
+    {
+        background: white;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+
+
+    .secondary-btn:hover
+    {
+        background: #f8fafc;
+    }
+
+
+    .summary-grid
+    {
+        display: grid;
+        grid-template-columns:
+            repeat(2, 1fr);
+        gap: 13px;
+        margin-bottom: 20px;
+    }
+
+
+    .summary-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 13px;
+        padding: 18px;
+        box-shadow:
+            0 3px 12px
+            rgba(15,23,42,.04);
+    }
+
+
+    .summary-card span
+    {
+        display: block;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 7px;
+    }
+
+
+    .summary-card strong
+    {
+        color: #172554;
+        font-size: 18px;
+    }
+
+
+    .refund-card strong,
+    .refund-text
+    {
+        color: #dc2626 !important;
+    }
+
+
+    .history-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+    }
+
+
+    .card-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 20px 22px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .card-header h2
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 19px;
+    }
+
+
+    .card-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    .search-box input
+    {
+        width: 230px;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        outline: none;
+        font-size: 12px;
+    }
+
+
+    .search-box input:focus
+    {
+        border-color: #2563eb;
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
+    }
+
+
+    .table-wrapper
+    {
+        overflow-x: auto;
+    }
+
+
+    .return-history-table
+    {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 850px;
+    }
+
+
+    .return-history-table th
+    {
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        padding: 13px 15px;
+        text-align: left;
+        border-bottom:
+            1px solid #e2e8f0;
+    }
+
+
+    .return-history-table td
+    {
+        padding: 14px 15px;
+        color: #475569;
+        font-size: 12px;
+        border-bottom:
+            1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+
+    .return-history-table tbody tr:hover
+    {
+        background: #f8fafc;
+    }
+
+
+    .invoice-link
+    {
+        color: #2563eb;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+
+    .invoice-link:hover
+    {
+        text-decoration: underline;
+    }
+
+
+    .medicine-count
+    {
+        color: #172554;
+        font-weight: 700;
+    }
+
+
+    .no-reason
+    {
+        color: #94a3b8;
+        font-style: italic;
+    }
+
+
+    .items-row
+    {
+        background: #fafafa;
+    }
+
+
+    .items-row:hover
+    {
+        background: #fafafa !important;
+    }
+
+
+    .returned-items
+    {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+    }
+
+
+    .returned-item
+    {
+        display: inline-flex;
+        padding: 5px 8px;
+        background: #fff7ed;
+        color: #c2410c;
+        border: 1px solid #fed7aa;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+
+    .empty-row
+    {
+        text-align: center;
+        padding: 45px !important;
+        color: #94a3b8 !important;
+    }
+
+
+    .success-message,
+    .error-message
+    {
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .success-message
+    {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #15803d;
+    }
+
+
+    .error-message
+    {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+
+    @@media (max-width: 700px)
+    {
+        .page-header
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .header-actions
+        {
+            width: 100%;
+        }
+
+
+        .header-actions a
+        {
+            flex: 1;
+        }
+
+
+        .summary-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .card-header
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .search-box,
+        .search-box input
+        {
+            width: 100%;
+            box-sizing: border-box;
+        }
+    }
+
+</style>

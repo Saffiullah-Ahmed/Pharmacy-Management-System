@@ -1,0 +1,98 @@
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="auth-card">
+
+    <h2>
+        Welcome Back
+    </h2>
+
+    <p class="auth-description">
+        Sign in to your pharmacy management system.
+    </p>
+
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+            ✓ @TempData["SuccessMessage"]
+        </div>
+    }
+
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+            ⚠ @TempData["ErrorMessage"]
+        </div>
+    }
+
+
+    <div asp-validation-summary="ModelOnly"
+         class="validation-summary">
+    </div>
+
+
+    <form asp-action="Login"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+
+        <div class="form-group">
+
+            <label>
+                Username
+            </label>
+
+            <input type="text"
+                   name="username"
+                   class="form-control"
+                   placeholder="Enter username"
+                   autocomplete="username"
+                   required />
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Password
+            </label>
+
+            <input type="password"
+                   name="password"
+                   class="form-control"
+                   placeholder="Enter password"
+                   autocomplete="current-password"
+                   required />
+
+        </div>
+
+
+        <button type="submit"
+                class="primary-btn">
+
+            🔐 Login
+
+        </button>
+
+    </form>
+
+
+    <div class="auth-footer">
+
+        Don't have a pharmacy account?
+
+        <a asp-controller="Account"
+           asp-action="Register">
+
+            Register Pharmacy
+
+        </a>
+
+    </div>
+
+</div>

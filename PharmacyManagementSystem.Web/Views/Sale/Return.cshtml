@@ -1,0 +1,1062 @@
+@model PharmacyManagementSystem.Web.Models.Sale?
+
+@{
+    ViewData["Title"] = "Return Sale";
+}
+
+<div class="return-page">
+
+    <!-- ==========================================================
+         HEADER
+    ========================================================== -->
+
+    <div class="return-header">
+
+        <div>
+
+            <h1>Return Sale</h1>
+
+            <p>
+                Process medicine returns using an invoice.
+            </p>
+
+        </div>
+
+        <a asp-controller="Sale"
+           asp-action="Index"
+           class="back-btn">
+
+            ← Back to Sales
+
+        </a>
+
+    </div>
+
+
+    <!-- ==========================================================
+         MESSAGES
+    ========================================================== -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+            ✓ @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="error-message">
+            ⚠ @TempData["ErrorMessage"]
+        </div>
+    }
+
+
+    <!-- ==========================================================
+         FIND SALE
+    ========================================================== -->
+
+    @if (Model == null)
+    {
+        <div class="return-card">
+
+            <div class="card-icon">
+                ↩
+            </div>
+
+            <h2>Find Sale</h2>
+
+            <p class="card-description">
+                Enter the invoice number to find the customer's sale.
+            </p>
+
+            <form asp-action="FindSale"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+
+                    <label>
+                        Invoice Number
+                    </label>
+
+                    <input type="text"
+                           name="invoiceNumber"
+                           class="form-control"
+                           placeholder="Example: INV-00007"
+                           autocomplete="off"
+                           required />
+
+                </div>
+
+                <button type="submit"
+                        class="primary-btn">
+
+                    🔍 Find Invoice
+
+                </button>
+
+            </form>
+
+        </div>
+    }
+    else
+    {
+
+        <!-- ======================================================
+             SALE INFORMATION
+        ====================================================== -->
+
+        <div class="sale-info-card">
+
+            <div class="sale-info-header">
+
+                <div>
+
+                    <span class="label">
+                        Invoice Number
+                    </span>
+
+                    <strong>
+                        @Model.InvoiceNumber
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span class="label">
+                        Sale Date
+                    </span>
+
+                    <strong>
+                        @Model.SaleDate.ToString(
+                            "dd/MM/yyyy hh:mm tt")
+                    </strong>
+
+                </div>
+
+            </div>
+
+            <div class="sale-info-footer">
+
+                <span>
+                    Sale Total
+                </span>
+
+                <strong>
+                    Rs. @Model.TotalAmount.ToString("N2")
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================================
+             RETURN FORM
+        ====================================================== -->
+
+        <div class="return-card">
+
+            <div class="card-title">
+
+                <div>
+
+                    <h2>Return Medicine</h2>
+
+                    <p>
+                        Select the medicine and enter the quantity to return.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <form asp-action="ProcessReturn"
+                  method="post"
+                  id="returnForm">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="saleId"
+                       value="@Model.Id" />
+
+
+                <!-- ==================================================
+                     MEDICINE
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label>
+                        Medicine
+                    </label>
+
+                    <select name="saleItemId"
+                            id="saleItemId"
+                            class="form-control"
+                            onchange="updateMedicineInfo()"
+                            required>
+
+                        <option value="">
+                            -- Select Medicine --
+                        </option>
+
+                        @foreach (var item in Model.Items)
+                        {
+                            <option value="@item.Id"
+                                    data-quantity="@item.Quantity"
+                                    data-price="@item.UnitPrice">
+
+                                @item.MedicineName
+                                | Remaining: @item.Quantity
+                                | Rs. @item.UnitPrice.ToString("N2")
+
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+
+                <!-- ==================================================
+                     MEDICINE INFORMATION
+                ================================================== -->
+
+                <div id="medicineInfo"
+                     class="medicine-info"
+                     style="display:none;">
+
+                    <div>
+
+                        <span>
+                            Returnable Quantity
+                        </span>
+
+                        <strong id="soldQuantity">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Unit Price
+                        </span>
+
+                        <strong id="unitPrice">
+                            Rs. 0.00
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Refund
+                        </span>
+
+                        <strong id="refundAmount">
+                            Rs. 0.00
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     RETURN QUANTITY
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label>
+                        Return Quantity
+                    </label>
+
+                    <input type="number"
+                           name="quantity"
+                           id="returnQuantity"
+                           class="form-control"
+                           min="1"
+                           value="1"
+                           oninput="calculateRefund()"
+                           required />
+
+                    <small id="quantityHelp">
+                        Select a medicine first.
+                    </small>
+
+                </div>
+
+
+                <!-- ==================================================
+                     REASON
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label>
+                        Return Reason
+                    </label>
+
+                    <textarea name="reason"
+                              class="form-control"
+                              rows="3"
+                              maxlength="255"
+                              placeholder="Example: Customer received wrong medicine, damaged package, expired medicine..."></textarea>
+
+                </div>
+
+
+                <!-- ==================================================
+                     ACTIONS
+                ================================================== -->
+
+                <div class="form-actions">
+
+                    <a asp-controller="Sale"
+                       asp-action="Index"
+                       class="cancel-btn">
+
+                        Cancel
+
+                    </a>
+
+                    <button type="submit"
+                            class="return-btn"
+                            id="returnButton">
+
+                        ↩ Return Medicine
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    }
+
+</div>
+
+
+@section Scripts
+{
+    <script>
+
+        let selectedQuantity = 0;
+        let selectedPrice = 0;
+
+
+        // ==========================================================
+        // UPDATE MEDICINE
+        // ==========================================================
+
+        function updateMedicineInfo()
+        {
+            const select =
+                document.getElementById("saleItemId");
+
+            const option =
+                select.options[select.selectedIndex];
+
+            const info =
+                document.getElementById("medicineInfo");
+
+            const quantityHelp =
+                document.getElementById("quantityHelp");
+
+            const quantityInput =
+                document.getElementById("returnQuantity");
+
+            if (!option.value)
+            {
+                info.style.display = "none";
+
+                selectedQuantity = 0;
+                selectedPrice = 0;
+
+                quantityInput.max = "";
+
+                quantityHelp.textContent =
+                    "Select a medicine first.";
+
+                calculateRefund();
+
+                return;
+            }
+
+            selectedQuantity =
+                parseInt(
+                    option.getAttribute("data-quantity")
+                ) || 0;
+
+            selectedPrice =
+                parseFloat(
+                    option.getAttribute("data-price")
+                ) || 0;
+
+
+            document.getElementById("soldQuantity")
+                .textContent =
+                selectedQuantity;
+
+
+            document.getElementById("unitPrice")
+                .textContent =
+                "Rs. " +
+                selectedPrice.toFixed(2);
+
+
+            quantityInput.max =
+                selectedQuantity;
+
+
+            if (parseInt(quantityInput.value) >
+                selectedQuantity)
+            {
+                quantityInput.value =
+                    selectedQuantity;
+            }
+
+
+            quantityHelp.textContent =
+                "Maximum return quantity: " +
+                selectedQuantity;
+
+
+            info.style.display = "grid";
+
+
+            calculateRefund();
+        }
+
+
+        // ==========================================================
+        // CALCULATE REFUND
+        // ==========================================================
+
+        function calculateRefund()
+        {
+            const quantityInput =
+                document.getElementById("returnQuantity");
+
+            let quantity =
+                parseInt(quantityInput.value) || 0;
+
+
+            if (selectedQuantity > 0 &&
+                quantity > selectedQuantity)
+            {
+                quantity =
+                    selectedQuantity;
+
+                quantityInput.value =
+                    selectedQuantity;
+            }
+
+
+            if (quantity < 0)
+            {
+                quantity = 0;
+            }
+
+
+            const refund =
+                quantity * selectedPrice;
+
+
+            document.getElementById("refundAmount")
+                .textContent =
+                "Rs. " +
+                refund.toFixed(2);
+        }
+
+
+        // ==========================================================
+        // FORM VALIDATION
+        // ==========================================================
+
+        document
+            .getElementById("returnForm")
+            ?.addEventListener(
+                "submit",
+                function(event)
+                {
+                    const select =
+                        document.getElementById(
+                            "saleItemId");
+
+                    const quantity =
+                        parseInt(
+                            document
+                                .getElementById(
+                                    "returnQuantity")
+                                .value
+                        ) || 0;
+
+
+                    if (!select.value)
+                    {
+                        event.preventDefault();
+
+                        alert(
+                            "Please select a medicine.");
+
+                        return;
+                    }
+
+
+                    if (quantity <= 0)
+                    {
+                        event.preventDefault();
+
+                        alert(
+                            "Return quantity must be greater than zero.");
+
+                        return;
+                    }
+
+
+                    if (quantity >
+                        selectedQuantity)
+                    {
+                        event.preventDefault();
+
+                        alert(
+                            "Return quantity cannot be greater than the remaining returnable quantity.");
+
+                        return;
+                    }
+
+                    // Prevent accidental double submission.
+                    const button =
+                        document.getElementById(
+                            "returnButton");
+
+                    button.disabled = true;
+
+                    button.textContent =
+                        "Processing...";
+
+                });
+    </script>
+}
+
+
+<style>
+
+    .return-page
+    {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+
+    .return-header
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 22px;
+    }
+
+
+    .return-header h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 30px;
+    }
+
+
+    .return-header p
+    {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 14px;
+    }
+
+
+    .back-btn
+    {
+        padding: 10px 15px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .back-btn:hover
+    {
+        background: #f8fafc;
+
+        color: #172554;
+    }
+
+
+    .return-card
+    {
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 15px;
+
+        padding: 28px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+
+        margin-bottom: 18px;
+    }
+
+
+    .card-icon
+    {
+        width: 50px;
+        height: 50px;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        background: #fff7ed;
+
+        border-radius: 12px;
+
+        font-size: 24px;
+
+        margin-bottom: 15px;
+    }
+
+
+    .return-card h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 20px;
+    }
+
+
+    .card-description
+    {
+        margin: 7px 0 22px;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+
+    .card-title p
+    {
+        margin: 7px 0 22px;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+
+    .sale-info-card
+    {
+        background: white;
+
+        border: 1px solid #dbeafe;
+
+        border-radius: 15px;
+
+        overflow: hidden;
+
+        margin-bottom: 18px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.04);
+    }
+
+
+    .sale-info-header
+    {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 20px;
+
+        padding: 20px 22px;
+
+        background: #eff6ff;
+    }
+
+
+    .sale-info-header .label
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+        margin-bottom: 5px;
+    }
+
+
+    .sale-info-header strong
+    {
+        color: #172554;
+
+        font-size: 15px;
+    }
+
+
+    .sale-info-footer
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        padding: 15px 22px;
+
+        border-top: 1px solid #dbeafe;
+    }
+
+
+    .sale-info-footer span
+    {
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+
+    .sale-info-footer strong
+    {
+        color: #172554;
+
+        font-size: 16px;
+    }
+
+
+    .form-group
+    {
+        margin-bottom: 20px;
+    }
+
+
+    .form-group label
+    {
+        display: block;
+
+        margin-bottom: 7px;
+
+        color: #334155;
+
+        font-size: 12px;
+
+        font-weight: 700;
+    }
+
+
+    .form-control
+    {
+        width: 100%;
+
+        box-sizing: border-box;
+
+        padding: 12px 13px;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 9px;
+
+        outline: none;
+
+        background: white;
+
+        color: #172554;
+
+        font-size: 13px;
+
+        transition: .2s;
+    }
+
+
+    .form-control:focus
+    {
+        border-color: #2563eb;
+
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
+    }
+
+
+    .form-group small
+    {
+        display: block;
+
+        margin-top: 6px;
+
+        color: #94a3b8;
+
+        font-size: 11px;
+    }
+
+
+    .medicine-info
+    {
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, 1fr);
+
+        gap: 12px;
+
+        margin-bottom: 20px;
+    }
+
+
+    .medicine-info > div
+    {
+        padding: 14px;
+
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+    }
+
+
+    .medicine-info span
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 10px;
+
+        font-weight: 600;
+    }
+
+
+    .medicine-info strong
+    {
+        display: block;
+
+        margin-top: 5px;
+
+        color: #172554;
+
+        font-size: 14px;
+    }
+
+
+    .primary-btn
+    {
+        border: none;
+
+        padding: 11px 18px;
+
+        background: #2563eb;
+
+        color: white;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+
+    .primary-btn:hover
+    {
+        background: #1d4ed8;
+    }
+
+
+    .form-actions
+    {
+        display: flex;
+
+        justify-content: flex-end;
+
+        gap: 10px;
+
+        margin-top: 25px;
+
+        padding-top: 20px;
+
+        border-top: 1px solid #e2e8f0;
+    }
+
+
+    .cancel-btn
+    {
+        padding: 11px 17px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .return-btn
+    {
+        padding: 11px 18px;
+
+        background: #ea580c;
+
+        color: white;
+
+        border: none;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+    }
+
+
+    .return-btn:hover
+    {
+        background: #c2410c;
+    }
+
+
+    .return-btn:disabled
+    {
+        opacity: .65;
+
+        cursor: not-allowed;
+    }
+
+
+    .success-message
+    {
+        padding: 12px 15px;
+
+        margin-bottom: 15px;
+
+        border-radius: 9px;
+
+        background: #f0fdf4;
+
+        border: 1px solid #bbf7d0;
+
+        color: #15803d;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .error-message
+    {
+        padding: 12px 15px;
+
+        margin-bottom: 15px;
+
+        border-radius: 9px;
+
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        color: #dc2626;
+
+        font-size: 13px;
+    }
+
+
+    @@media (max-width: 600px)
+    {
+        .return-header
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+        .sale-info-header
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .medicine-info
+        {
+            grid-template-columns: 1fr;
+        }
+
+        .form-actions
+        {
+            flex-direction: column;
+        }
+
+        .cancel-btn,
+        .return-btn
+        {
+            width: 100%;
+
+            text-align: center;
+
+            box-sizing: border-box;
+        }
+    }
+
+</style>

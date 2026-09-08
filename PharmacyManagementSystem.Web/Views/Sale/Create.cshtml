@@ -1,0 +1,1787 @@
+@model PharmacyManagementSystem.Web.Models.Sale
+
+@using PharmacyManagementSystem.Web.Models
+
+@{
+    ViewData["Title"] = "Create Sale";
+
+    var medicines =
+        ViewBag.Medicines as List<Medicine>
+        ?? new List<Medicine>();
+
+    var customers =
+        ViewBag.Customers as List<Customer>
+        ?? new List<Customer>();
+}
+
+<div class="sale-page">
+
+    <!-- ==========================================================
+         HEADER
+    ========================================================== -->
+
+    <div class="sale-header">
+
+        <div>
+            <h1>Create Sale</h1>
+
+            <p>
+                Create a new medicine sale
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="back-btn">
+
+            ← Back to Sales
+
+        </a>
+
+    </div>
+
+
+    <!-- ==========================================================
+         VALIDATION SUMMARY
+    ========================================================== -->
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="All"
+            class="validation-summary">
+        </div>
+    }
+
+
+    <!-- ==========================================================
+         SALE FORM
+    ========================================================== -->
+
+    <form asp-action="Create"
+          method="post"
+          id="saleForm">
+
+        @Html.AntiForgeryToken()
+
+
+        <!-- ======================================================
+             CUSTOMER
+        ====================================================== -->
+
+        <div class="sale-card">
+
+            <div class="card-title">
+
+                <div>
+
+                    <h2>
+                        Customer
+                    </h2>
+
+                    <p>
+                        Select a customer or leave blank for walk-in sales.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label asp-for="CustomerId">
+                    Customer
+                </label>
+
+
+                <select asp-for="CustomerId"
+                        class="form-control">
+
+                    <option value="">
+                        -- Walk-in Customer --
+                    </option>
+
+
+                    @foreach (var customer in customers)
+                    {
+                        <option value="@customer.Id">
+
+                            @customer.Name
+
+                            @if (!string.IsNullOrWhiteSpace(customer.Phone))
+                            {
+                                <text>
+                                    | @customer.Phone
+                                </text>
+                            }
+
+                        </option>
+                    }
+
+                </select>
+
+
+                <small>
+                    A customer is required if the customer leaves an outstanding balance.
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================================
+             MEDICINES
+        ====================================================== -->
+
+        <div class="sale-card">
+
+            <div class="card-title">
+
+                <div>
+
+                    <h2>
+                        Medicines
+                    </h2>
+
+                    <p>
+                        Select medicines and enter quantities.
+                    </p>
+
+                </div>
+
+
+                <button type="button"
+                        class="add-btn"
+                        id="addMedicineBtn">
+
+                    + Add Medicine
+
+                </button>
+
+            </div>
+
+
+            <div id="medicineRows">
+
+                <div class="medicine-row">
+
+                    <div class="form-group medicine-field">
+
+                        <label>
+                            Medicine
+                        </label>
+
+
+                        <select name="Items[0].MedicineId"
+                                class="form-control medicine-select"
+                                required>
+
+                            <option value="">
+                                -- Select Medicine --
+                            </option>
+
+
+                            @foreach (var medicine in medicines)
+                            {
+                                <option value="@medicine.Id"
+                                        data-price="@medicine.Price"
+                                        data-name="@medicine.Name">
+
+                                    @medicine.Name
+                                    | Stock: @medicine.Quantity
+                                    | Rs. @medicine.Price.ToString("N2")
+
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group quantity-field">
+
+                        <label>
+                            Quantity
+                        </label>
+
+
+                        <input type="number"
+                               name="Items[0].Quantity"
+                               class="form-control quantity-input"
+                               min="1"
+                               placeholder="Enter quantity"
+                               required />
+
+                    </div>
+
+
+                    <div class="form-group price-field">
+
+                        <label>
+                            Unit Price
+                        </label>
+
+
+                        <input type="text"
+                               class="form-control price-display"
+                               value="Rs. 0.00"
+                               readonly />
+
+                    </div>
+
+
+                    <div class="form-group total-field">
+
+                        <label>
+                            Total
+                        </label>
+
+
+                        <input type="text"
+                               class="form-control item-total-display"
+                               value="Rs. 0.00"
+                               readonly />
+
+                    </div>
+
+
+                    <button type="button"
+                            class="remove-btn"
+                            onclick="removeMedicine(this)">
+
+                        ×
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ======================================================
+             PAYMENT
+        ====================================================== -->
+
+        <div class="sale-card">
+
+            <div class="card-title">
+
+                <div>
+
+                    <h2>
+                        Payment
+                    </h2>
+
+                    <p>
+                        Review the sale total and payment information.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="payment-grid">
+
+
+                <!-- ==================================================
+                     TOTAL AMOUNT
+                ================================================== -->
+
+                <div class="summary-box">
+
+                    <span>
+                        Total Amount
+                    </span>
+
+                    <strong id="totalAmountDisplay">
+                        Rs. 0.00
+                    </strong>
+
+                </div>
+
+
+                <!-- ==================================================
+                     DISCOUNT
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label>
+                        Discount
+                    </label>
+
+
+                    <!-- Visible field used ONLY for typing -->
+
+                    <input type="text"
+                           id="discountInput"
+                           class="form-control"
+                           inputmode="decimal"
+                           autocomplete="off"
+                           placeholder="0.00" />
+
+
+                    <!-- Actual value submitted to controller -->
+
+                    <input type="hidden"
+                           asp-for="DiscountAmount"
+                           id="discountAmount" />
+
+                </div>
+
+
+                <!-- ==================================================
+                     NET AMOUNT
+                ================================================== -->
+
+                <div class="summary-box">
+
+                    <span>
+                        Net Amount
+                    </span>
+
+                    <strong id="netAmountDisplay">
+                        Rs. 0.00
+                    </strong>
+
+                </div>
+
+
+                <!-- ==================================================
+                     AMOUNT RECEIVED
+                ================================================== -->
+
+                <div class="form-group">
+
+                    <label>
+                        Amount Received
+                    </label>
+
+
+                    <!-- Visible field used ONLY for typing -->
+
+                    <input type="text"
+                           id="amountReceivedInput"
+                           class="form-control"
+                           inputmode="decimal"
+                           autocomplete="off"
+                           placeholder="0.00" />
+
+
+                    <!-- Actual value submitted to controller -->
+
+                    <input type="hidden"
+                           asp-for="AmountReceived"
+                           id="amountReceived" />
+
+                </div>
+
+
+                <!-- ==================================================
+                     CHANGE
+                ================================================== -->
+
+                <div class="summary-box">
+
+                    <span>
+                        Change
+                    </span>
+
+                    <strong id="changeDisplay">
+                        Rs. 0.00
+                    </strong>
+
+                </div>
+
+
+                <!-- ==================================================
+                     BALANCE
+                ================================================== -->
+
+                <div class="summary-box balance-box">
+
+                    <span>
+                        Balance
+                    </span>
+
+                    <strong id="balanceDisplay">
+                        Rs. 0.00
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- ======================================================
+                 OTHER HIDDEN VALUES
+            ====================================================== -->
+
+            <input type="hidden"
+                   asp-for="TotalAmount"
+                   id="totalAmount" />
+
+
+            <input type="hidden"
+                   asp-for="NetAmount"
+                   id="netAmount" />
+
+
+            <input type="hidden"
+                   asp-for="ChangeAmount"
+                   id="changeAmount" />
+
+
+            <input type="hidden"
+                   asp-for="BalanceAmount"
+                   id="balanceAmount" />
+
+
+            <input type="hidden"
+                   asp-for="GenerateBill" />
+
+        </div>
+
+
+        <!-- ======================================================
+             ACTIONS
+        ====================================================== -->
+
+        <div class="form-actions">
+
+            <a asp-action="Index"
+               class="cancel-btn">
+
+                Cancel
+
+            </a>
+
+
+            <button type="submit"
+                    class="complete-btn"
+                    id="completeSaleBtn">
+
+                ✓ Complete Sale
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+
+    <script>
+
+        // ==========================================================
+        // MEDICINE INDEX
+        // ==========================================================
+
+        let medicineIndex = 1;
+
+
+        // ==========================================================
+        // FORMAT CURRENCY
+        // ==========================================================
+
+        function formatCurrency(value)
+        {
+            return "Rs. " +
+                Number(value || 0).toFixed(2);
+        }
+
+
+        // ==========================================================
+        // GET MEDICINE PRICE
+        // ==========================================================
+
+        function getMedicinePrice(select)
+        {
+            if (!select || !select.value)
+            {
+                return 0;
+            }
+
+
+            const option =
+                select.options[select.selectedIndex];
+
+
+            return parseFloat(
+                option.getAttribute("data-price")
+            ) || 0;
+        }
+
+
+        // ==========================================================
+        // UPDATE MEDICINE ROW
+        // ==========================================================
+
+        function updateMedicineRow(row)
+        {
+            if (!row)
+            {
+                return;
+            }
+
+
+            const select =
+                row.querySelector(".medicine-select");
+
+
+            const quantityInput =
+                row.querySelector(".quantity-input");
+
+
+            const priceDisplay =
+                row.querySelector(".price-display");
+
+
+            const totalDisplay =
+                row.querySelector(".item-total-display");
+
+
+            const price =
+                getMedicinePrice(select);
+
+
+            const quantity =
+                parseInt(quantityInput.value) || 0;
+
+
+            priceDisplay.value =
+                formatCurrency(price);
+
+
+            totalDisplay.value =
+                formatCurrency(
+                    price * quantity
+                );
+        }
+
+
+        // ==========================================================
+        // GET DISCOUNT
+        // ==========================================================
+
+        function getDiscount()
+        {
+            const input =
+                document.getElementById(
+                    "discountInput"
+                );
+
+
+            const value =
+                parseFloat(input.value);
+
+
+            if (isNaN(value))
+            {
+                return 0;
+            }
+
+
+            if (value < 0)
+            {
+                return 0;
+            }
+
+
+            return value;
+        }
+
+
+        // ==========================================================
+        // GET AMOUNT RECEIVED
+        // ==========================================================
+
+        function getAmountReceived()
+        {
+            const input =
+                document.getElementById(
+                    "amountReceivedInput"
+                );
+
+
+            const value =
+                parseFloat(input.value);
+
+
+            if (isNaN(value))
+            {
+                return 0;
+            }
+
+
+            if (value < 0)
+            {
+                return 0;
+            }
+
+
+            return value;
+        }
+
+
+        // ==========================================================
+        // CALCULATE TOTAL
+        // ==========================================================
+
+        function calculateTotal()
+        {
+            let total = 0;
+
+
+            document
+                .querySelectorAll(".medicine-row")
+                .forEach(function(row)
+                {
+                    const select =
+                        row.querySelector(
+                            ".medicine-select"
+                        );
+
+
+                    const quantityInput =
+                        row.querySelector(
+                            ".quantity-input"
+                        );
+
+
+                    const price =
+                        getMedicinePrice(select);
+
+
+                    const quantity =
+                        parseInt(
+                            quantityInput.value
+                        ) || 0;
+
+
+                    const itemTotal =
+                        price * quantity;
+
+
+                    const totalDisplay =
+                        row.querySelector(
+                            ".item-total-display"
+                        );
+
+
+                    totalDisplay.value =
+                        formatCurrency(
+                            itemTotal
+                        );
+
+
+                    total += itemTotal;
+                });
+
+
+            document.getElementById(
+                "totalAmountDisplay"
+            ).textContent =
+                formatCurrency(total);
+
+
+            document.getElementById(
+                "totalAmount"
+            ).value =
+                total.toFixed(2);
+
+
+            calculatePayment(total);
+        }
+
+
+        // ==========================================================
+        // CALCULATE PAYMENT
+        // ==========================================================
+
+        function calculatePayment(total)
+        {
+            const discountInput =
+                document.getElementById(
+                    "discountInput"
+                );
+
+
+            const amountReceivedInput =
+                document.getElementById(
+                    "amountReceivedInput"
+                );
+
+
+            let discount =
+                getDiscount();
+
+
+            let amountReceived =
+                getAmountReceived();
+
+
+            // Discount cannot exceed total
+
+            if (discount > total)
+            {
+                discount = total;
+            }
+
+
+            const net =
+                total - discount;
+
+
+            let change = 0;
+
+            let balance = 0;
+
+
+            if (amountReceived >= net)
+            {
+                change =
+                    amountReceived - net;
+            }
+            else
+            {
+                balance =
+                    net - amountReceived;
+            }
+
+
+            // ======================================================
+            // DISPLAY VALUES
+            // ======================================================
+
+            document.getElementById(
+                "netAmountDisplay"
+            ).textContent =
+                formatCurrency(net);
+
+
+            document.getElementById(
+                "changeDisplay"
+            ).textContent =
+                formatCurrency(change);
+
+
+            document.getElementById(
+                "balanceDisplay"
+            ).textContent =
+                formatCurrency(balance);
+
+
+            // ======================================================
+            // HIDDEN VALUES SENT TO SERVER
+            // ======================================================
+
+            document.getElementById(
+                "discountAmount"
+            ).value =
+                discount.toFixed(2);
+
+
+            document.getElementById(
+                "amountReceived"
+            ).value =
+                amountReceived.toFixed(2);
+
+
+            document.getElementById(
+                "netAmount"
+            ).value =
+                net.toFixed(2);
+
+
+            document.getElementById(
+                "changeAmount"
+            ).value =
+                change.toFixed(2);
+
+
+            document.getElementById(
+                "balanceAmount"
+            ).value =
+                balance.toFixed(2);
+        }
+
+
+        // ==========================================================
+        // ADD MEDICINE
+        // ==========================================================
+
+        document
+            .getElementById("addMedicineBtn")
+            .addEventListener(
+                "click",
+                function()
+                {
+                    const container =
+                        document.getElementById(
+                            "medicineRows"
+                        );
+
+
+                    const row =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    row.className =
+                        "medicine-row";
+
+
+                    row.innerHTML = `
+                        <div class="form-group medicine-field">
+
+                            <label>
+                                Medicine
+                            </label>
+
+                            <select
+                                name="Items[${medicineIndex}].MedicineId"
+                                class="form-control medicine-select"
+                                required>
+
+                                <option value="">
+                                    -- Select Medicine --
+                                </option>
+
+                                @foreach (var medicine in medicines)
+                                {
+                                    <option
+                                        value="@medicine.Id"
+                                        data-price="@medicine.Price"
+                                        data-name="@medicine.Name">
+
+                                        @medicine.Name
+                                        | Stock: @medicine.Quantity
+                                        | Rs. @medicine.Price.ToString("N2")
+
+                                    </option>
+                                }
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group quantity-field">
+
+                            <label>
+                                Quantity
+                            </label>
+
+                            <input
+                                type="number"
+                                name="Items[${medicineIndex}].Quantity"
+                                class="form-control quantity-input"
+                                min="1"
+                                placeholder="Enter quantity"
+                                required />
+
+                        </div>
+
+
+                        <div class="form-group price-field">
+
+                            <label>
+                                Unit Price
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control price-display"
+                                value="Rs. 0.00"
+                                readonly />
+
+                        </div>
+
+
+                        <div class="form-group total-field">
+
+                            <label>
+                                Total
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control item-total-display"
+                                value="Rs. 0.00"
+                                readonly />
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="remove-btn"
+                            onclick="removeMedicine(this)">
+
+                            ×
+
+                        </button>
+                    `;
+
+
+                    container.appendChild(row);
+
+
+                    medicineIndex++;
+                }
+            );
+
+
+        // ==========================================================
+        // REMOVE MEDICINE
+        // ==========================================================
+
+        function removeMedicine(button)
+        {
+            const rows =
+                document.querySelectorAll(
+                    ".medicine-row"
+                );
+
+
+            if (rows.length <= 1)
+            {
+                alert(
+                    "At least one medicine is required."
+                );
+
+                return;
+            }
+
+
+            button
+                .closest(".medicine-row")
+                .remove();
+
+
+            reindexItems();
+
+            calculateTotal();
+        }
+
+
+        // ==========================================================
+        // REINDEX MEDICINE ITEMS
+        // ==========================================================
+
+        function reindexItems()
+        {
+            const rows =
+                document.querySelectorAll(
+                    ".medicine-row"
+                );
+
+
+            rows.forEach(
+                function(row, index)
+                {
+                    const medicineSelect =
+                        row.querySelector(
+                            ".medicine-select"
+                        );
+
+
+                    const quantityInput =
+                        row.querySelector(
+                            ".quantity-input"
+                        );
+
+
+                    medicineSelect.name =
+                        `Items[${index}].MedicineId`;
+
+
+                    quantityInput.name =
+                        `Items[${index}].Quantity`;
+                }
+            );
+
+
+            medicineIndex =
+                rows.length;
+        }
+
+
+        // ==========================================================
+        // MEDICINE CHANGE
+        // ==========================================================
+
+        document.addEventListener(
+            "change",
+            function(event)
+            {
+                if (
+                    event.target.classList.contains(
+                        "medicine-select"
+                    )
+                )
+                {
+                    const row =
+                        event.target.closest(
+                            ".medicine-row"
+                        );
+
+
+                    updateMedicineRow(row);
+
+                    calculateTotal();
+                }
+            }
+        );
+
+
+        // ==========================================================
+        // QUANTITY INPUT
+        // ==========================================================
+
+        document.addEventListener(
+            "input",
+            function(event)
+            {
+                if (
+                    event.target.classList.contains(
+                        "quantity-input"
+                    )
+                )
+                {
+                    const row =
+                        event.target.closest(
+                            ".medicine-row"
+                        );
+
+
+                    updateMedicineRow(row);
+
+                    calculateTotal();
+                }
+            }
+        );
+
+
+        // ==========================================================
+        // DISCOUNT INPUT
+        // ==========================================================
+
+        document
+            .getElementById("discountInput")
+            .addEventListener(
+                "input",
+                function()
+                {
+                    const total =
+                        parseFloat(
+                            document.getElementById(
+                                "totalAmount"
+                            ).value
+                        ) || 0;
+
+
+                    calculatePayment(total);
+                }
+            );
+
+
+        // ==========================================================
+        // AMOUNT RECEIVED INPUT
+        // ==========================================================
+
+        document
+            .getElementById("amountReceivedInput")
+            .addEventListener(
+                "input",
+                function()
+                {
+                    const total =
+                        parseFloat(
+                            document.getElementById(
+                                "totalAmount"
+                            ).value
+                        ) || 0;
+
+
+                    calculatePayment(total);
+                }
+            );
+
+
+        // ==========================================================
+        // FORM SUBMIT
+        // ==========================================================
+
+        document
+            .getElementById("saleForm")
+            .addEventListener(
+                "submit",
+                function(event)
+                {
+                    reindexItems();
+
+                    calculateTotal();
+
+
+                    const rows =
+                        document.querySelectorAll(
+                            ".medicine-row"
+                        );
+
+
+                    if (rows.length === 0)
+                    {
+                        event.preventDefault();
+
+
+                        alert(
+                            "Please add at least one medicine."
+                        );
+
+
+                        return;
+                    }
+
+
+                    let valid = true;
+
+
+                    rows.forEach(
+                        function(row)
+                        {
+                            const select =
+                                row.querySelector(
+                                    ".medicine-select"
+                                );
+
+
+                            const quantityInput =
+                                row.querySelector(
+                                    ".quantity-input"
+                                );
+
+
+                            if (!select.value)
+                            {
+                                valid = false;
+                            }
+
+
+                            const quantity =
+                                parseInt(
+                                    quantityInput.value
+                                ) || 0;
+
+
+                            if (quantity <= 0)
+                            {
+                                valid = false;
+                            }
+                        }
+                    );
+
+
+                    if (!valid)
+                    {
+                        event.preventDefault();
+
+
+                        alert(
+                            "Please select a medicine and enter a valid quantity for every medicine."
+                        );
+
+
+                        return;
+                    }
+
+
+                    const balance =
+                        parseFloat(
+                            document.getElementById(
+                                "balanceAmount"
+                            ).value
+                        ) || 0;
+
+
+                    const customer =
+                        document.getElementById(
+                            "CustomerId"
+                        );
+
+
+                    if (
+                        balance > 0 &&
+                        !customer.value
+                    )
+                    {
+                        event.preventDefault();
+
+
+                        alert(
+                            "Please select a customer when there is an outstanding balance."
+                        );
+
+
+                        customer.focus();
+
+
+                        return;
+                    }
+
+
+                    // Make absolutely sure the hidden
+                    // payment values contain the latest values.
+
+                    const total =
+                        parseFloat(
+                            document.getElementById(
+                                "totalAmount"
+                            ).value
+                        ) || 0;
+
+
+                    calculatePayment(total);
+                }
+            );
+
+
+        // ==========================================================
+        // INITIALIZE PAGE
+        // ==========================================================
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function()
+            {
+                const firstRow =
+                    document.querySelector(
+                        ".medicine-row"
+                    );
+
+
+                if (firstRow)
+                {
+                    updateMedicineRow(
+                        firstRow
+                    );
+                }
+
+
+                calculateTotal();
+            }
+        );
+
+    </script>
+}
+
+
+<style>
+
+    /* ==========================================================
+       PAGE
+    ========================================================== */
+
+    .sale-page
+    {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+
+    /* ==========================================================
+       HEADER
+    ========================================================== */
+
+    .sale-header
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+
+    .sale-header h1
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 30px;
+    }
+
+
+    .sale-header p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+
+    .back-btn
+    {
+        padding: 10px 15px;
+        background: white;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+
+    .back-btn:hover
+    {
+        background: #f8fafc;
+        color: #172554;
+    }
+
+
+    /* ==========================================================
+       CARD
+    ========================================================== */
+
+    .sale-card
+    {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 15px;
+        padding: 24px;
+        margin-bottom: 18px;
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+    }
+
+
+    .card-title
+    {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+
+    .card-title h2
+    {
+        margin: 0;
+        color: #172554;
+        font-size: 19px;
+    }
+
+
+    .card-title p
+    {
+        margin: 5px 0 0;
+        color: #64748b;
+        font-size: 12px;
+    }
+
+
+    /* ==========================================================
+       FORM
+    ========================================================== */
+
+    .form-group
+    {
+        margin-bottom: 17px;
+    }
+
+
+    .form-group label
+    {
+        display: block;
+        margin-bottom: 7px;
+        color: #334155;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+
+    .form-control
+    {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: white;
+        color: #172554;
+        outline: none;
+        font-size: 13px;
+        transition: .2s;
+    }
+
+
+    .form-control:focus
+    {
+        border-color: #2563eb;
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
+    }
+
+
+    .form-control[readonly]
+    {
+        background: #f8fafc;
+        color: #475569;
+    }
+
+
+    .form-group small
+    {
+        display: block;
+        margin-top: 6px;
+        color: #94a3b8;
+        font-size: 11px;
+    }
+
+
+    /* ==========================================================
+       MEDICINE ROW
+    ========================================================== */
+
+    .medicine-row
+    {
+        display: grid;
+
+        grid-template-columns:
+            minmax(280px, 2fr)
+            110px
+            150px
+            150px
+            35px;
+
+        gap: 12px;
+
+        align-items: end;
+
+        padding: 16px;
+
+        margin-bottom: 12px;
+
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 12px;
+    }
+
+
+    .medicine-row .form-group
+    {
+        margin-bottom: 0;
+    }
+
+
+    /* ==========================================================
+       REMOVE BUTTON
+    ========================================================== */
+
+    .remove-btn
+    {
+        width: 35px;
+        height: 35px;
+
+        border: 1px solid #fecaca;
+
+        border-radius: 8px;
+
+        background: #fef2f2;
+
+        color: #dc2626;
+
+        font-size: 20px;
+
+        cursor: pointer;
+    }
+
+
+    .remove-btn:hover
+    {
+        background: #fee2e2;
+    }
+
+
+    /* ==========================================================
+       ADD BUTTON
+    ========================================================== */
+
+    .add-btn
+    {
+        border: none;
+
+        padding: 10px 15px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        border-radius: 8px;
+
+        font-size: 12px;
+
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .add-btn:hover
+    {
+        background: #dbeafe;
+    }
+
+
+    /* ==========================================================
+       PAYMENT
+    ========================================================== */
+
+    .payment-grid
+    {
+        display: grid;
+
+        grid-template-columns:
+            repeat(3, 1fr);
+
+        gap: 15px;
+    }
+
+
+    .summary-box
+    {
+        padding: 15px;
+
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 10px;
+    }
+
+
+    .summary-box span
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 600;
+    }
+
+
+    .summary-box strong
+    {
+        display: block;
+
+        margin-top: 5px;
+
+        color: #172554;
+
+        font-size: 17px;
+    }
+
+
+    .balance-box
+    {
+        background: #fff7ed;
+
+        border-color: #fed7aa;
+    }
+
+
+    /* ==========================================================
+       VALIDATION
+    ========================================================== */
+
+    .validation-summary
+    {
+        margin-bottom: 15px;
+
+        padding: 12px 15px;
+
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        border-radius: 9px;
+
+        color: #dc2626;
+
+        font-size: 13px;
+    }
+
+
+    /*
+     * Hide the summary when there are no
+     * validation messages.
+     */
+
+    .validation-summary:empty
+    {
+        display: none;
+    }
+
+
+    /* ==========================================================
+       ACTIONS
+    ========================================================== */
+
+    .form-actions
+    {
+        display: flex;
+
+        justify-content: flex-end;
+
+        gap: 10px;
+
+        padding-top: 5px;
+    }
+
+
+    .cancel-btn
+    {
+        padding: 11px 18px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .complete-btn
+    {
+        padding: 11px 20px;
+
+        border: none;
+
+        border-radius: 9px;
+
+        background: #16a34a;
+
+        color: white;
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .complete-btn:hover
+    {
+        background: #15803d;
+    }
+
+
+    /* ==========================================================
+       MOBILE
+    ========================================================== */
+
+    @@media (max-width: 850px)
+    {
+        .medicine-row
+        {
+            grid-template-columns: 1fr 1fr;
+        }
+
+
+        .medicine-field
+        {
+            grid-column: 1 / -1;
+        }
+
+
+        .remove-btn
+        {
+            width: 100%;
+        }
+
+
+        .payment-grid
+        {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+
+    @@media (max-width: 600px)
+    {
+        .sale-header
+        {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+
+        .card-title
+        {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+
+        .medicine-row
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .medicine-field
+        {
+            grid-column: auto;
+        }
+
+
+        .payment-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .form-actions
+        {
+            flex-direction: column;
+        }
+
+
+        .cancel-btn,
+        .complete-btn
+        {
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+    }
+
+</style>

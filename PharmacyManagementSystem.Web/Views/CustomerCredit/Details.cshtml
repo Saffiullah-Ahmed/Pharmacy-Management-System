@@ -1,0 +1,626 @@
+@model PharmacyManagementSystem.Web.Models.Customer
+
+@{
+    ViewData["Title"] = "Customer Credit";
+
+    decimal balance =
+        ViewBag.Balance ?? 0;
+
+    var pendingSales =
+        ViewBag.PendingSales
+        as List<PharmacyManagementSystem.Web.Models.Sale>
+        ?? new List<PharmacyManagementSystem.Web.Models.Sale>();
+
+    var payments =
+        ViewBag.Payments
+        as List<PharmacyManagementSystem.Web.Models.CustomerPayment>
+        ?? new List<PharmacyManagementSystem.Web.Models.CustomerPayment>();
+}
+
+<div class="credit-details-page">
+
+    <div class="page-header">
+
+        <div>
+
+            <h1>@Model.Name</h1>
+
+            <p>
+                Customer credit account
+            </p>
+
+        </div>
+
+        <a asp-action="Index"
+           class="back-btn">
+
+            ← Pending Payments
+
+        </a>
+
+    </div>
+
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="success-message">
+
+            ✓ @TempData["SuccessMessage"]
+
+        </div>
+    }
+
+
+    <!-- CUSTOMER INFORMATION -->
+
+    <div class="customer-info-card">
+
+        <div>
+            <span>Customer</span>
+
+            <strong>
+                @Model.Name
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Phone</span>
+
+            <strong>
+                @Model.Phone
+            </strong>
+        </div>
+
+
+        <div>
+            <span>CNIC</span>
+
+            <strong>
+                @(string.IsNullOrWhiteSpace(Model.CNIC)
+                    ? "Not provided"
+                    : Model.CNIC)
+            </strong>
+        </div>
+
+
+        <div>
+            <span>Outstanding</span>
+
+            <strong class="outstanding">
+
+                Rs. @balance.ToString("N2")
+
+            </strong>
+        </div>
+
+    </div>
+
+
+    <!-- PENDING INVOICES -->
+
+    <div class="section-card">
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>Pending Invoices</h2>
+
+                <p>
+                    Sales that still have outstanding payments
+                </p>
+
+            </div>
+
+        </div>
+
+
+        @if (pendingSales.Count == 0)
+        {
+            <div class="empty-section">
+
+                ✓ No pending invoices.
+
+            </div>
+        }
+        else
+        {
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Invoice</th>
+
+                            <th>Date</th>
+
+                            <th>Net Amount</th>
+
+                            <th>Received</th>
+
+                            <th>Balance</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var sale in pendingSales)
+                        {
+                            <tr>
+
+                                <td>
+                                    <strong>
+                                        @sale.InvoiceNumber
+                                    </strong>
+                                </td>
+
+
+                                <td>
+                                    @sale.SaleDate.ToString(
+                                        "dd/MM/yyyy")
+                                </td>
+
+
+                                <td>
+                                    Rs.
+                                    @sale.NetAmount.ToString("N2")
+                                </td>
+
+
+                                <td>
+                                    Rs.
+                                    @sale.AmountReceived.ToString("N2")
+                                </td>
+
+
+                                <td class="balance-cell">
+
+                                    Rs.
+                                    @sale.BalanceAmount.ToString("N2")
+
+                                </td>
+
+
+                                <td>
+
+                                    <a asp-action="ReceivePayment"
+                                       asp-route-customerId="@Model.Id"
+                                       asp-route-saleId="@sale.Id"
+                                       class="payment-btn">
+
+                                        Receive Payment
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+    </div>
+
+
+    <!-- PAYMENT HISTORY -->
+
+    <div class="section-card">
+
+        <div class="section-header">
+
+            <div>
+
+                <h2>Payment History</h2>
+
+                <p>
+                    Payments received from this customer
+                </p>
+
+            </div>
+
+        </div>
+
+
+        @if (payments.Count == 0)
+        {
+            <div class="empty-section">
+
+                No payment history yet.
+
+            </div>
+        }
+        else
+        {
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Date</th>
+
+                            <th>Invoice</th>
+
+                            <th>Amount</th>
+
+                            <th>Notes</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var payment in payments)
+                        {
+                            <tr>
+
+                                <td>
+                                    @payment.PaymentDate.ToString(
+                                        "dd/MM/yyyy hh:mm tt")
+                                </td>
+
+
+                                <td>
+                                    @payment.InvoiceNumber
+                                </td>
+
+
+                                <td class="payment-amount">
+
+                                    Rs.
+                                    @payment.Amount.ToString("N2")
+
+                                </td>
+
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(
+                                        payment.Notes)
+                                        ? "-"
+                                        : payment.Notes)
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .credit-details-page
+    {
+        max-width: 1100px;
+
+        margin: 0 auto;
+    }
+
+
+    .page-header
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 22px;
+    }
+
+
+    .page-header h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 30px;
+    }
+
+
+    .page-header p
+    {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 14px;
+    }
+
+
+    .back-btn
+    {
+        padding: 10px 15px;
+
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .back-btn:hover
+    {
+        background: #f8fafc;
+
+        color: #172554;
+    }
+
+
+    .customer-info-card
+    {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, 1fr);
+
+        gap: 15px;
+
+        padding: 20px;
+
+        margin-bottom: 18px;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 14px;
+    }
+
+
+    .customer-info-card span
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        margin-bottom: 5px;
+    }
+
+
+    .customer-info-card strong
+    {
+        color: #172554;
+
+        font-size: 14px;
+    }
+
+
+    .customer-info-card .outstanding
+    {
+        color: #dc2626;
+
+        font-size: 18px;
+    }
+
+
+    .section-card
+    {
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 14px;
+
+        margin-bottom: 18px;
+
+        overflow: hidden;
+    }
+
+
+    .section-header
+    {
+        padding: 20px;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .section-header h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 18px;
+    }
+
+
+    .section-header p
+    {
+        margin: 4px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+
+    .table-wrapper
+    {
+        overflow-x: auto;
+    }
+
+
+    table
+    {
+        width: 100%;
+
+        border-collapse: collapse;
+    }
+
+
+    th
+    {
+        padding: 13px 15px;
+
+        background: #f8fafc;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        text-align: left;
+
+        white-space: nowrap;
+    }
+
+
+    td
+    {
+        padding: 15px;
+
+        border-top: 1px solid #f1f5f9;
+
+        color: #475569;
+
+        font-size: 12px;
+
+        white-space: nowrap;
+    }
+
+
+    td strong
+    {
+        color: #172554;
+    }
+
+
+    .balance-cell
+    {
+        color: #dc2626;
+
+        font-weight: 700;
+    }
+
+
+    .payment-amount
+    {
+        color: #16a34a;
+
+        font-weight: 700;
+    }
+
+
+    .payment-btn
+    {
+        display: inline-block;
+
+        padding: 8px 12px;
+
+        background: #16a34a;
+
+        color: white;
+
+        border-radius: 7px;
+
+        text-decoration: none;
+
+        font-size: 11px;
+
+        font-weight: 600;
+    }
+
+
+    .payment-btn:hover
+    {
+        background: #15803d;
+    }
+
+
+    .empty-section
+    {
+        padding: 25px;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+
+    .success-message
+    {
+        padding: 12px 15px;
+
+        margin-bottom: 15px;
+
+        border-radius: 9px;
+
+        background: #f0fdf4;
+
+        border: 1px solid #bbf7d0;
+
+        color: #15803d;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    @@media (max-width: 800px)
+    {
+        .customer-info-card
+        {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+
+    @@media (max-width: 600px)
+    {
+        .page-header
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+
+        .customer-info-card
+        {
+            grid-template-columns: 1fr;
+        }
+    }
+
+</style>

@@ -1,0 +1,1563 @@
+@model List<PharmacyManagementSystem.Web.Models.User>
+
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<div class="user-page">
+
+    <!-- ============================================================
+         HEADER
+    ============================================================ -->
+
+    <div class="page-header">
+
+        <div>
+            <h1>Manage Users</h1>
+
+            <p>
+                Manage staff accounts and permissions
+            </p>
+        </div>
+
+        <a asp-action="Add"
+           class="add-btn">
+            + Add User
+        </a>
+
+    </div>
+
+
+    <!-- ============================================================
+         SUCCESS MESSAGE
+    ============================================================ -->
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="message success-message">
+            ✓ @TempData["SuccessMessage"]
+        </div>
+    }
+
+
+    <!-- ============================================================
+         ERROR MESSAGE
+    ============================================================ -->
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="message error-message">
+            ⚠ @TempData["ErrorMessage"]
+        </div>
+    }
+
+
+    <!-- ============================================================
+         USERS CARD
+    ============================================================ -->
+
+    <div class="users-card">
+
+        <div class="card-top">
+
+            <div>
+                <h2>Users</h2>
+
+                <p>
+                    Accounts belonging to your pharmacy
+                </p>
+            </div>
+
+            <div class="user-count">
+                @(Model?.Count ?? 0) Users
+            </div>
+
+        </div>
+
+
+        @if (Model == null || Model.Count == 0)
+        {
+            <!-- ====================================================
+                 EMPTY STATE
+            ==================================================== -->
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    👤
+                </div>
+
+                <h3>No users found</h3>
+
+                <p>
+                    Create a staff account to get started.
+                </p>
+
+                <a asp-action="Add"
+                   class="add-btn">
+                    + Add User
+                </a>
+
+            </div>
+        }
+        else
+        {
+            <!-- ====================================================
+                 TABLE
+            ==================================================== -->
+
+            <div class="table-wrapper">
+
+                <table class="users-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th class="id-column">
+                                ID
+                            </th>
+
+                            <th class="user-column">
+                                User
+                            </th>
+
+                            <th class="role-column">
+                                Role
+                            </th>
+
+                            <th class="permission-column">
+                                Permissions
+                            </th>
+
+                            <th class="status-column">
+                                Status
+                            </th>
+
+                            <th class="created-column">
+                                Created
+                            </th>
+
+                            <th class="actions-column">
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (var user in Model)
+                        {
+                            var isAdmin =
+                                string.Equals(
+                                    user.Role,
+                                    "Admin",
+                                    StringComparison.OrdinalIgnoreCase);
+
+                            var isCurrentUser =
+                                User.FindFirst(
+                                    System.Security.Claims.ClaimTypes.NameIdentifier
+                                )?.Value == user.Id.ToString();
+
+                            var userInitial =
+                                string.IsNullOrWhiteSpace(user.Username)
+                                    ? "?"
+                                    : user.Username.Substring(0, 1).ToUpperInvariant();
+
+                            <tr>
+
+                                <!-- =================================================
+                                     ID
+                                ================================================== -->
+
+                                <td>
+
+                                    <span class="id-badge">
+                                        #@user.Id
+                                    </span>
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     USER
+                                ================================================== -->
+
+                                <td>
+
+                                    <div class="user-info">
+
+                                        <div class="avatar">
+                                            @userInitial
+                                        </div>
+
+                                        <div class="user-details">
+
+                                            <strong>
+                                                @user.Username
+                                            </strong>
+
+                                            <span>
+                                                Pharmacy ID: @user.PharmacyId
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     ROLE
+                                ================================================== -->
+
+                                <td>
+
+                                    @if (isAdmin)
+                                    {
+                                        <span class="role-badge admin">
+                                            Administrator
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="role-badge staff">
+                                            Staff
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     PERMISSIONS
+                                ================================================== -->
+
+                                <td>
+
+                                    @if (isAdmin)
+                                    {
+                                        <span class="full-access">
+                                            ✓ Full Access
+                                        </span>
+                                    }
+                                    else if (user.Permissions != null &&
+                                             user.Permissions.Count > 0)
+                                    {
+                                        <div class="permission-summary">
+
+                                            <span>
+                                                @user.Permissions.Count
+                                                permission@(user.Permissions.Count == 1 ? "" : "s")
+                                            </span>
+
+                                            <small>
+                                                @string.Join(
+                                                    ", ",
+                                                    user.Permissions)
+                                            </small>
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="no-access">
+                                            No permissions
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     STATUS
+                                ================================================== -->
+
+                                <td>
+
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="status active">
+
+                                            <i></i>
+
+                                            Active
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status inactive">
+
+                                            <i></i>
+
+                                            Inactive
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     CREATED
+                                ================================================== -->
+
+                                <td>
+
+                                    <span class="created-date">
+                                        @user.CreatedAt.ToString("dd/MM/yyyy")
+                                    </span>
+
+                                    <small class="created-time">
+                                        @user.CreatedAt.ToString("hh:mm tt")
+                                    </small>
+
+                                </td>
+
+
+                                <!-- =================================================
+                                     ACTIONS
+                                ================================================== -->
+
+                                <td>
+
+                                    @if (isAdmin)
+                                    {
+                                        <span class="protected-text">
+                                            Protected
+                                        </span>
+                                    }
+                                    else if (isCurrentUser)
+                                    {
+                                        <span class="protected-text">
+                                            Your Account
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <div class="action-buttons">
+
+                                            <a asp-action="Permissions"
+                                               asp-route-id="@user.Id"
+                                               class="action-btn permission-btn">
+                                                Permissions
+                                            </a>
+
+
+                                            <form asp-action="ToggleStatus"
+                                                  method="post"
+                                                  class="inline-form">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="id"
+                                                       value="@user.Id" />
+
+                                                @if (user.IsActive)
+                                                {
+                                                    <button type="submit"
+                                                            class="action-btn status-btn deactivate">
+                                                        Disable
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="submit"
+                                                            class="action-btn status-btn activate">
+                                                        Activate
+                                                    </button>
+                                                }
+
+                                            </form>
+
+
+                                            <button type="button"
+                                                    class="action-btn delete-btn"
+                                                    onclick="openDeleteModal(
+                                                        @user.Id,
+                                                        '@Html.Raw(System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(user.Username))'
+                                                    )">
+                                                Delete
+                                            </button>
+
+                                        </div>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+<!-- ================================================================
+     DELETE CONFIRMATION MODAL
+================================================================ -->
+
+<div id="deleteModal"
+     class="modal-overlay"
+     onclick="closeDeleteModal(event)">
+
+    <div class="confirm-modal"
+         onclick="event.stopPropagation()">
+
+        <div class="confirm-icon">
+            ⚠
+        </div>
+
+        <h2>
+            Delete User?
+        </h2>
+
+        <p>
+            You are about to permanently delete
+            <strong id="deleteUsername"></strong>.
+        </p>
+
+        <p class="warning-text">
+            This action cannot be undone.
+        </p>
+
+
+        <form asp-action="Delete"
+              method="post"
+              id="deleteForm">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   name="id"
+                   id="deleteUserId" />
+
+            <div class="modal-actions">
+
+                <button type="button"
+                        class="modal-cancel"
+                        onclick="closeDeleteModal()">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="modal-delete">
+                    Yes, Delete User
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ================================================================
+     JAVASCRIPT
+================================================================ -->
+
+<script>
+
+    function openDeleteModal(userId, username)
+    {
+        document.getElementById("deleteUserId").value =
+            userId;
+
+        document.getElementById("deleteUsername").textContent =
+            username;
+
+        document.getElementById("deleteModal")
+            .classList.add("show");
+
+        document.body.classList.add("modal-open");
+    }
+
+
+    function closeDeleteModal(event)
+    {
+        if (event &&
+            event.target !== event.currentTarget)
+        {
+            return;
+        }
+
+        document.getElementById("deleteModal")
+            .classList.remove("show");
+
+        document.body.classList.remove("modal-open");
+    }
+
+
+    document.addEventListener(
+        "keydown",
+        function(event)
+        {
+            if (event.key === "Escape")
+            {
+                closeDeleteModal();
+            }
+        }
+    );
+
+</script>
+
+
+<style>
+
+    /* ============================================================
+       PAGE
+       IMPORTANT:
+       No fixed max-width.
+       Page uses the complete available content area.
+    ============================================================ */
+
+    .user-page
+    {
+        width: 100%;
+
+        max-width: none;
+
+        margin: 0;
+
+        box-sizing: border-box;
+    }
+
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+
+    .page-header
+    {
+        width: 100%;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 22px;
+    }
+
+
+    .page-header h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 30px;
+
+        font-weight: 800;
+
+        line-height: 1.2;
+    }
+
+
+    .page-header p
+    {
+        margin: 5px 0 0;
+
+        color: #64748b;
+
+        font-size: 14px;
+    }
+
+
+    .add-btn
+    {
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 11px 17px;
+
+        background: #2563eb;
+
+        color: white;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+        border: none;
+
+        cursor: pointer;
+
+        white-space: nowrap;
+
+        transition: .2s;
+    }
+
+
+    .add-btn:hover
+    {
+        background: #1d4ed8;
+
+        color: white;
+
+        text-decoration: none;
+    }
+
+
+    /* ============================================================
+       MESSAGES
+    ============================================================ */
+
+    .message
+    {
+        width: 100%;
+
+        box-sizing: border-box;
+
+        padding: 12px 15px;
+
+        margin-bottom: 15px;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+
+    .success-message
+    {
+        background: #f0fdf4;
+
+        border: 1px solid #bbf7d0;
+
+        color: #15803d;
+    }
+
+
+    .error-message
+    {
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        color: #dc2626;
+    }
+
+
+    /* ============================================================
+       USERS CARD
+    ============================================================ */
+
+    .users-card
+    {
+        width: 100%;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 15px;
+
+        box-shadow:
+            0 4px 16px
+            rgba(15,23,42,.05);
+
+        overflow: hidden;
+
+        box-sizing: border-box;
+    }
+
+
+    .card-top
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        padding: 20px 22px;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+
+    .card-top h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 18px;
+
+        font-weight: 700;
+    }
+
+
+    .card-top p
+    {
+        margin: 4px 0 0;
+
+        color: #64748b;
+
+        font-size: 12px;
+    }
+
+
+    .user-count
+    {
+        padding: 7px 11px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        border-radius: 7px;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    /* ============================================================
+       TABLE
+    ============================================================ */
+
+    .table-wrapper
+    {
+        width: 100%;
+
+        overflow-x: auto;
+    }
+
+
+    .users-table
+    {
+        width: 100%;
+
+        border-collapse: collapse;
+
+        table-layout: auto;
+    }
+
+
+    .users-table th
+    {
+        padding: 13px 15px;
+
+        background: #f8fafc;
+
+        color: #64748b;
+
+        text-align: left;
+
+        font-size: 10px;
+
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: .04em;
+
+        border-bottom: 1px solid #e2e8f0;
+
+        white-space: nowrap;
+    }
+
+
+    .users-table td
+    {
+        padding: 15px;
+
+        border-bottom: 1px solid #f1f5f9;
+
+        vertical-align: middle;
+
+        color: #334155;
+
+        font-size: 12px;
+    }
+
+
+    .users-table tbody tr:hover
+    {
+        background: #fafcff;
+    }
+
+
+    .users-table tbody tr:last-child td
+    {
+        border-bottom: none;
+    }
+
+
+    /* ============================================================
+       COLUMN WIDTHS
+    ============================================================ */
+
+    .id-column
+    {
+        width: 6%;
+    }
+
+
+    .user-column
+    {
+        width: 20%;
+    }
+
+
+    .role-column
+    {
+        width: 14%;
+    }
+
+
+    .permission-column
+    {
+        width: 23%;
+    }
+
+
+    .status-column
+    {
+        width: 11%;
+    }
+
+
+    .created-column
+    {
+        width: 12%;
+    }
+
+
+    .actions-column
+    {
+        width: 14%;
+
+        text-align: right !important;
+    }
+
+
+    /* ============================================================
+       ID
+    ============================================================ */
+
+    .id-badge
+    {
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    /* ============================================================
+       USER
+    ============================================================ */
+
+    .user-info
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        min-width: 150px;
+    }
+
+
+    .avatar
+    {
+        width: 35px;
+
+        height: 35px;
+
+        flex-shrink: 0;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        background: #dbeafe;
+
+        color: #1d4ed8;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 800;
+    }
+
+
+    .user-details
+    {
+        min-width: 0;
+    }
+
+
+    .user-info strong
+    {
+        display: block;
+
+        color: #172554;
+
+        font-size: 12px;
+
+        font-weight: 700;
+
+        line-height: 1.3;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+        white-space: nowrap;
+    }
+
+
+    .user-info span
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+
+        line-height: 1.3;
+
+        white-space: nowrap;
+    }
+
+
+    /* ============================================================
+       ROLE
+    ============================================================ */
+
+    .role-badge
+    {
+        display: inline-block;
+
+        padding: 5px 8px;
+
+        border-radius: 6px;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    .role-badge.admin
+    {
+        background: #fef3c7;
+
+        color: #92400e;
+    }
+
+
+    .role-badge.staff
+    {
+        background: #eff6ff;
+
+        color: #1d4ed8;
+    }
+
+
+    /* ============================================================
+       PERMISSIONS
+    ============================================================ */
+
+    .full-access
+    {
+        color: #15803d;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    .permission-summary span
+    {
+        display: block;
+
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 700;
+    }
+
+
+    .permission-summary small
+    {
+        display: block;
+
+        max-width: 300px;
+
+        margin-top: 3px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        line-height: 1.4;
+    }
+
+
+    .no-access
+    {
+        color: #dc2626;
+
+        font-size: 11px;
+
+        font-weight: 600;
+    }
+
+
+    /* ============================================================
+       STATUS
+    ============================================================ */
+
+    .status
+    {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+    }
+
+
+    .status i
+    {
+        width: 7px;
+
+        height: 7px;
+
+        display: inline-block;
+
+        border-radius: 50%;
+    }
+
+
+    .status.active
+    {
+        color: #15803d;
+    }
+
+
+    .status.active i
+    {
+        background: #22c55e;
+    }
+
+
+    .status.inactive
+    {
+        color: #dc2626;
+    }
+
+
+    .status.inactive i
+    {
+        background: #ef4444;
+    }
+
+
+    /* ============================================================
+       CREATED
+    ============================================================ */
+
+    .created-date
+    {
+        display: block;
+
+        color: #334155;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+        white-space: nowrap;
+    }
+
+
+    .created-time
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #94a3b8;
+
+        font-size: 9px;
+
+        white-space: nowrap;
+    }
+
+
+    /* ============================================================
+       ACTIONS
+    ============================================================ */
+
+    .action-buttons
+    {
+        display: flex;
+
+        justify-content: flex-end;
+
+        align-items: center;
+
+        gap: 5px;
+
+        white-space: nowrap;
+    }
+
+
+    .inline-form
+    {
+        display: inline;
+    }
+
+
+    .action-btn
+    {
+        padding: 6px 9px;
+
+        border-radius: 6px;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        text-decoration: none;
+
+        border: 1px solid;
+
+        cursor: pointer;
+
+        background: white;
+
+        transition: .15s;
+
+        white-space: nowrap;
+    }
+
+
+    .permission-btn
+    {
+        color: #2563eb;
+
+        border-color: #bfdbfe;
+    }
+
+
+    .permission-btn:hover
+    {
+        background: #eff6ff;
+    }
+
+
+    .status-btn.deactivate
+    {
+        color: #b45309;
+
+        border-color: #fde68a;
+    }
+
+
+    .status-btn.deactivate:hover
+    {
+        background: #fffbeb;
+    }
+
+
+    .status-btn.activate
+    {
+        color: #15803d;
+
+        border-color: #bbf7d0;
+    }
+
+
+    .status-btn.activate:hover
+    {
+        background: #f0fdf4;
+    }
+
+
+    .delete-btn
+    {
+        color: #dc2626;
+
+        border-color: #fecaca;
+    }
+
+
+    .delete-btn:hover
+    {
+        background: #fef2f2;
+    }
+
+
+    .protected-text
+    {
+        color: #94a3b8;
+
+        font-size: 10px;
+
+        font-weight: 600;
+
+        white-space: nowrap;
+    }
+
+
+    /* ============================================================
+       EMPTY STATE
+    ============================================================ */
+
+    .empty-state
+    {
+        padding: 60px 20px;
+
+        text-align: center;
+    }
+
+
+    .empty-icon
+    {
+        width: 60px;
+
+        height: 60px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        margin: 0 auto 14px;
+
+        background: #f1f5f9;
+
+        border-radius: 14px;
+
+        font-size: 27px;
+    }
+
+
+    .empty-state h3
+    {
+        margin: 0;
+
+        color: #334155;
+
+        font-size: 16px;
+    }
+
+
+    .empty-state p
+    {
+        margin: 6px 0 18px;
+
+        color: #94a3b8;
+
+        font-size: 12px;
+    }
+
+
+    /* ============================================================
+       DELETE MODAL
+    ============================================================ */
+
+    .modal-overlay
+    {
+        position: fixed;
+
+        inset: 0;
+
+        z-index: 9999;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 20px;
+
+        background: rgba(15,23,42,.55);
+
+        opacity: 0;
+
+        visibility: hidden;
+
+        transition: .2s;
+    }
+
+
+    .modal-overlay.show
+    {
+        opacity: 1;
+
+        visibility: visible;
+    }
+
+
+    .confirm-modal
+    {
+        width: 100%;
+
+        max-width: 420px;
+
+        padding: 28px;
+
+        background: white;
+
+        border-radius: 15px;
+
+        box-shadow:
+            0 20px 50px
+            rgba(15,23,42,.25);
+
+        text-align: center;
+
+        transform: translateY(10px);
+
+        transition: .2s;
+    }
+
+
+    .modal-overlay.show .confirm-modal
+    {
+        transform: translateY(0);
+    }
+
+
+    .confirm-icon
+    {
+        width: 52px;
+
+        height: 52px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        margin: 0 auto 15px;
+
+        background: #fef2f2;
+
+        color: #dc2626;
+
+        border-radius: 50%;
+
+        font-size: 23px;
+    }
+
+
+    .confirm-modal h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 20px;
+    }
+
+
+    .confirm-modal p
+    {
+        margin: 10px 0 0;
+
+        color: #64748b;
+
+        font-size: 13px;
+
+        line-height: 1.5;
+    }
+
+
+    .confirm-modal p strong
+    {
+        color: #172554;
+    }
+
+
+    .warning-text
+    {
+        color: #dc2626 !important;
+
+        font-size: 11px !important;
+
+        font-weight: 600;
+    }
+
+
+    .modal-actions
+    {
+        display: flex;
+
+        justify-content: center;
+
+        gap: 10px;
+
+        margin-top: 25px;
+    }
+
+
+    .modal-cancel,
+    .modal-delete
+    {
+        padding: 10px 16px;
+
+        border-radius: 8px;
+
+        font-size: 12px;
+
+        font-weight: 700;
+
+        cursor: pointer;
+    }
+
+
+    .modal-cancel
+    {
+        background: white;
+
+        color: #475569;
+
+        border: 1px solid #cbd5e1;
+    }
+
+
+    .modal-cancel:hover
+    {
+        background: #f8fafc;
+    }
+
+
+    .modal-delete
+    {
+        background: #dc2626;
+
+        color: white;
+
+        border: 1px solid #dc2626;
+    }
+
+
+    .modal-delete:hover
+    {
+        background: #b91c1c;
+    }
+
+
+    .modal-open
+    {
+        overflow: hidden;
+    }
+
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+
+    @@media (max-width: 1200px)
+    {
+        .users-table
+        {
+            min-width: 1050px;
+        }
+    }
+
+
+    @@media (max-width: 700px)
+    {
+        .page-header
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 12px;
+        }
+
+
+        .add-btn
+        {
+            width: 100%;
+
+            box-sizing: border-box;
+
+            text-align: center;
+        }
+
+
+        .card-top
+        {
+            gap: 10px;
+
+            align-items: flex-start;
+        }
+
+
+        .action-buttons
+        {
+            justify-content: flex-start;
+        }
+
+
+        .users-table
+        {
+            min-width: 1050px;
+        }
+    }
+
+</style>

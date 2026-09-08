@@ -1,0 +1,948 @@
+@model PharmacyManagementSystem.Web.Models.Sale
+
+@{
+    ViewData["Title"] = "Invoice";
+
+    string storeName = "PharmaCare";
+    string storePhone = "+92 300 1234567";
+    string storeEmail = "info@pharmacare.com";
+}
+
+
+<div class="bill-page">
+
+    <!-- ============================================================
+         ACTIONS
+    ============================================================ -->
+
+    <div class="bill-actions">
+
+        <a asp-controller="Sale"
+           asp-action="Index"
+           class="bill-back-btn">
+
+            ← Back to Sales
+
+        </a>
+
+
+        <button type="button"
+                class="bill-print-btn"
+                onclick="window.print()">
+
+            🖨️ Print Invoice
+
+        </button>
+
+    </div>
+
+
+    <!-- ============================================================
+         BILL
+    ============================================================ -->
+
+    <div class="bill-card">
+
+
+        <!-- ========================================================
+             STORE HEADER
+        ======================================================== -->
+
+        <div class="store-header">
+
+            <div class="store-logo">
+                💊
+            </div>
+
+            <h1>
+                @storeName
+            </h1>
+
+            <p>
+                Pharmacy & Healthcare Store
+            </p>
+
+
+            <div class="store-contact">
+
+                <div>
+                    <span>☎</span>
+                    @storePhone
+                </div>
+
+                <div>
+                    <span>✉</span>
+                    @storeEmail
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================================
+             INVOICE INFORMATION
+        ======================================================== -->
+
+        <div class="invoice-info">
+
+            <div>
+
+                <span>
+                    Invoice Number
+                </span>
+
+                <strong>
+                    @Model.InvoiceNumber
+                </strong>
+
+            </div>
+
+
+            <div class="invoice-date-info">
+
+                <div>
+
+                    <span>
+                        Date
+                    </span>
+
+                    <strong>
+                        @Model.SaleDate.ToString("dd/MM/yyyy")
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <span>
+                        Time
+                    </span>
+
+                    <strong>
+                        @Model.SaleDate.ToString("hh:mm tt")
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================================
+             CUSTOMER
+        ======================================================== -->
+
+        @if (Model.CustomerId.HasValue)
+        {
+            <div class="customer-info">
+
+                <span>
+                    Customer ID
+                </span>
+
+                <strong>
+                    #@Model.CustomerId
+                </strong>
+
+            </div>
+        }
+        else
+        {
+            <div class="customer-info">
+
+                <span>
+                    Customer
+                </span>
+
+                <strong>
+                    Walk-in Customer
+                </strong>
+
+            </div>
+        }
+
+
+        <!-- ========================================================
+             MEDICINES
+        ======================================================== -->
+
+        <div class="bill-items">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            #
+                        </th>
+
+                        <th>
+                            Medicine
+                        </th>
+
+                        <th>
+                            Qty
+                        </th>
+
+                        <th>
+                            Unit Price
+                        </th>
+
+                        <th>
+                            Total
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @{
+                        int number = 1;
+                    }
+
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+
+                            <td>
+                                @number
+                            </td>
+
+                            <td>
+
+                                <strong>
+                                    @item.MedicineName
+                                </strong>
+
+                            </td>
+
+                            <td>
+                                @item.Quantity
+                            </td>
+
+                            <td>
+                                Rs.
+                                @item.UnitPrice.ToString("N2")
+                            </td>
+
+                            <td>
+
+                                <strong>
+                                    Rs.
+                                    @item.TotalPrice.ToString("N2")
+                                </strong>
+
+                            </td>
+
+                        </tr>
+
+                        number++;
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- ========================================================
+             TOTAL
+        ======================================================== -->
+
+        <div class="bill-total-section">
+
+            <div class="total-label">
+                Total Amount
+            </div>
+
+            <div class="total-value">
+                Rs. @Model.TotalAmount.ToString("N2")
+            </div>
+
+        </div>
+
+
+        <!-- ========================================================
+             PAYMENT
+        ======================================================== -->
+
+        <div class="bill-payment">
+
+            <div class="payment-row">
+
+                <span>
+                    Discount Amount:
+                </span>
+
+                <strong>
+                    Rs.
+                    @Model.DiscountAmount.ToString("N2")
+                </strong>
+
+            </div>
+
+
+            <div class="payment-row">
+
+                <span>
+                    Net Amount:
+                </span>
+
+                <strong>
+                    Rs.
+                    @Model.NetAmount.ToString("N2")
+                </strong>
+
+            </div>
+
+
+            <div class="payment-row">
+
+                <span>
+                    Paid Amount:
+                </span>
+
+                <strong>
+                    Rs.
+                    @Model.AmountReceived.ToString("N2")
+                </strong>
+
+            </div>
+
+
+            @if (Model.ChangeAmount > 0)
+            {
+                <div class="payment-row">
+
+                    <span>
+                        Return Amount:
+                    </span>
+
+                    <strong class="return-value">
+
+                        Rs.
+                        @Model.ChangeAmount.ToString("N2")
+
+                    </strong>
+
+                </div>
+            }
+
+
+            <div class="balance-separator"></div>
+
+
+            <div class="payment-row balance-row">
+
+                <span>
+                    Balance Amount:
+                </span>
+
+                <strong>
+                    Rs.
+                    @Model.BalanceAmount.ToString("N2")
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================================
+             FOOTER
+        ======================================================== -->
+
+        <div class="bill-footer">
+
+            <h3>
+                Thank you for your purchase!
+            </h3>
+
+            <p>
+                Please keep this invoice for your records.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    /* ============================================================
+       PAGE
+    ============================================================ */
+
+    .bill-page
+    {
+        max-width: 950px;
+
+        margin: 0 auto;
+    }
+
+
+    /* ============================================================
+       ACTIONS
+    ============================================================ */
+
+    .bill-actions
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 18px;
+    }
+
+    .bill-back-btn,
+    .bill-print-btn
+    {
+        padding: 10px 16px;
+
+        border-radius: 9px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        text-decoration: none;
+    }
+
+    .bill-back-btn
+    {
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        color: #475569;
+    }
+
+    .bill-back-btn:hover
+    {
+        color: #2563eb;
+
+        background: #f8fafc;
+    }
+
+    .bill-print-btn
+    {
+        background: #2563eb;
+
+        border: none;
+
+        color: white;
+    }
+
+    .bill-print-btn:hover
+    {
+        background: #1d4ed8;
+    }
+
+
+    /* ============================================================
+       BILL
+    ============================================================ */
+
+    .bill-card
+    {
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 18px;
+
+        padding: 38px;
+
+        box-shadow:
+            0 5px 22px rgba(15,23,42,.06);
+    }
+
+
+    /* ============================================================
+       STORE
+    ============================================================ */
+
+    .store-header
+    {
+        text-align: center;
+
+        padding-bottom: 25px;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .store-logo
+    {
+        width: 64px;
+        height: 64px;
+
+        margin: 0 auto 12px;
+
+        border-radius: 16px;
+
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        background: #eff6ff;
+
+        font-size: 30px;
+    }
+
+    .store-header h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 28px;
+
+        font-weight: 800;
+    }
+
+    .store-header > p
+    {
+        margin: 5px 0 18px;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+
+    /* ============================================================
+       CONTACT
+    ============================================================ */
+
+    .store-contact
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        max-width: 550px;
+
+        margin: 0 auto;
+
+        color: #475569;
+
+        font-size: 12px;
+
+        font-weight: 600;
+    }
+
+    .store-contact div
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 6px;
+    }
+
+    .store-contact span
+    {
+        color: #2563eb;
+    }
+
+
+    /* ============================================================
+       INVOICE INFO
+    ============================================================ */
+
+    .invoice-info
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        padding: 22px 0;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .invoice-info > div
+    {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 5px;
+    }
+
+    .invoice-info span
+    {
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 600;
+    }
+
+    .invoice-info strong
+    {
+        color: #172554;
+
+        font-size: 14px;
+    }
+
+    .invoice-date-info
+    {
+        flex-direction: row !important;
+
+        gap: 35px !important;
+
+        text-align: right;
+    }
+
+
+    /* ============================================================
+       CUSTOMER
+    ============================================================ */
+
+    .customer-info
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        padding: 16px 0;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .customer-info span
+    {
+        color: #64748b;
+
+        font-size: 12px;
+
+        font-weight: 600;
+    }
+
+    .customer-info strong
+    {
+        color: #172554;
+
+        font-size: 13px;
+    }
+
+
+    /* ============================================================
+       ITEMS
+    ============================================================ */
+
+    .bill-items
+    {
+        margin-top: 25px;
+
+        overflow-x: auto;
+    }
+
+    .bill-items table
+    {
+        width: 100%;
+
+        border-collapse: collapse;
+    }
+
+    .bill-items th
+    {
+        padding: 13px 15px;
+
+        background: #f8fafc;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        text-align: left;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .bill-items td
+    {
+        padding: 15px;
+
+        color: #475569;
+
+        font-size: 13px;
+
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .bill-items td strong
+    {
+        color: #172554;
+    }
+
+
+    /* ============================================================
+       TOTAL
+    ============================================================ */
+
+    .bill-total-section
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        width: 100%;
+
+        margin-top: 25px;
+
+        padding: 17px 0;
+
+        border-top: 2px solid #172554;
+
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .total-label
+    {
+        color: #172554;
+
+        font-size: 16px;
+
+        font-weight: 700;
+    }
+
+    .total-value
+    {
+        color: #172554;
+
+        font-size: 18px;
+
+        font-weight: 800;
+    }
+
+
+    /* ============================================================
+       PAYMENT
+    ============================================================ */
+
+    .bill-payment
+    {
+        width: 100%;
+
+        margin-top: 18px;
+    }
+
+    .payment-row
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        padding: 9px 0;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+    .payment-row strong
+    {
+        color: #172554;
+
+        font-size: 14px;
+    }
+
+    .return-value
+    {
+        color: #059669 !important;
+    }
+
+
+    /* ============================================================
+       BALANCE
+    ============================================================ */
+
+    .balance-separator
+    {
+        width: 100%;
+
+        border-top: 1px solid #172554;
+
+        margin: 7px 0;
+    }
+
+    .balance-row
+    {
+        padding: 13px 0;
+    }
+
+    .balance-row span
+    {
+        color: #172554;
+
+        font-size: 15px;
+
+        font-weight: 800;
+    }
+
+    .balance-row strong
+    {
+        color: #dc2626;
+
+        font-size: 18px;
+
+        font-weight: 800;
+    }
+
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+
+    .bill-footer
+    {
+        text-align: center;
+
+        margin-top: 35px;
+
+        padding-top: 23px;
+
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .bill-footer h3
+    {
+        margin: 0;
+
+        color: #334155;
+
+        font-size: 15px;
+    }
+
+    .bill-footer p
+    {
+        margin: 5px 0 0;
+
+        color: #94a3b8;
+
+        font-size: 12px;
+    }
+
+
+    /* ============================================================
+       MOBILE
+    ============================================================ */
+
+    @@media (max-width: 700px)
+    {
+        .bill-card
+        {
+            padding: 22px;
+        }
+
+        .bill-actions
+        {
+            flex-direction: column;
+
+            gap: 10px;
+        }
+
+        .bill-back-btn,
+        .bill-print-btn
+        {
+            width: 100%;
+
+            text-align: center;
+        }
+
+        .invoice-info
+        {
+            flex-direction: column;
+
+            gap: 18px;
+        }
+
+        .invoice-date-info
+        {
+            text-align: left;
+        }
+
+        .store-contact
+        {
+            flex-direction: column;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+    }
+
+
+    /* ============================================================
+       PRINT
+    ============================================================ */
+
+    @@media print
+    {
+        body
+        {
+            background: white !important;
+        }
+
+        .bill-actions,
+        .sidebar,
+        .top-navbar,
+        .app-footer
+        {
+            display: none !important;
+        }
+
+        .app-main
+        {
+            margin-left: 0 !important;
+
+            width: 100% !important;
+        }
+
+        .page-content
+        {
+            padding: 0 !important;
+        }
+
+        .bill-page
+        {
+            max-width: 100% !important;
+        }
+
+        .bill-card
+        {
+            border: none !important;
+
+            box-shadow: none !important;
+
+            border-radius: 0 !important;
+
+            padding: 10px !important;
+        }
+    }
+
+</style>
