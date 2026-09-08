@@ -2,523 +2,2055 @@
 
 @{
     ViewData["Title"] = "Dashboard";
+
+    string username =
+        User.Identity?.Name ?? "User";
+
+    string role =
+        User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value
+        ?? "Staff";
+
+    string firstLetter =
+        username.Length > 0
+            ? username.Substring(0, 1).ToUpper()
+            : "U";
+
+    int totalAlerts =
+        Model.LowStockMedicines +
+        Model.ExpiringSoonMedicines;
+
+    bool hasAlerts =
+        totalAlerts > 0;
 }
 
-<div class="dashboard">
 
-    <!-- ==========================================
-         MAIN CONTENT
-    ========================================== -->
+<div class="dashboard-page">
 
-    <main class="main-content">
+    <!-- =========================================================
+         DASHBOARD HEADER
+    ========================================================== -->
+
+    <div class="dashboard-header">
+
+        <div class="dashboard-title">
+
+            <span class="dashboard-eyebrow">
+                PHARMACY MANAGEMENT SYSTEM
+            </span>
+
+            <h1>
+                Dashboard
+            </h1>
+
+            <p>
+                Welcome back, @username. Here's your pharmacy overview
+                for today.
+            </p>
+
+        </div>
+
+    </div>
 
 
-        <!-- ==========================================
-             TOP BAR
-        ========================================== -->
+    <!-- =========================================================
+         ERROR MESSAGE
+    ========================================================== -->
 
-        <header class="topbar">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="dashboard-message error-message">
+
+            <span class="message-icon">
+                ⚠
+            </span>
 
             <div>
 
-                <h1 style="font-weight: 700;">
-                    Dashboard
-                </h1>
+                <strong>
+                    Dashboard Notice
+                </strong>
 
                 <p>
-                    Welcome back! Here's what's happening today.
+                    @TempData["ErrorMessage"]
                 </p>
 
             </div>
 
-
-            <div class="profile">
-
-                <div class="notification">
-                    🔔
-                </div>
-
-                <div class="profile-info">
-
-                    <strong>
-                        Pharmacist
-                    </strong>
-
-                    <span>
-                        Administrator
-                    </span>
-
-                </div>
-
-                <div class="profile-avatar">
-                    P
-                </div>
-
-            </div>
-
-        </header>
+        </div>
+    }
 
 
-        <!-- ==========================================
-             STATISTICS
-        ========================================== -->
+    <!-- =========================================================
+         MAIN STATISTICS
+    ========================================================== -->
 
-        <section class="stats-grid">
+    <section class="stats-grid">
 
 
-            <!-- TOTAL MEDICINES -->
+        <!-- =====================================================
+             TOTAL MEDICINES
+        ====================================================== -->
 
-            <a asp-controller="Medicine"
-               asp-action="Index"
-               class="stat-card dashboard-link">
+        <a asp-controller="Medicine"
+           asp-action="Index"
+           class="stat-card stat-blue">
+
+            <div class="stat-card-top">
 
                 <div class="stat-icon">
                     💊
                 </div>
 
-                <div>
+                <span class="stat-arrow">
+                    →
+                </span>
 
-                    <span>
-                        Total Medicines
-                    </span>
+            </div>
 
-                    <h2>
-                        @Model.TotalMedicines
-                    </h2>
+            <div class="stat-content">
 
-                    <small>
-                        Medicines in inventory
-                    </small>
+                <span class="stat-label">
+                    Total Medicines
+                </span>
 
-                </div>
+                <strong class="stat-number">
+                    @Model.TotalMedicines
+                </strong>
 
-            </a>
+                <span class="stat-description">
+                    Medicines in inventory
+                </span>
+
+            </div>
+
+        </a>
 
 
-            <!-- TODAY'S SALES -->
+        <!-- =====================================================
+             TODAY'S SALES
+        ====================================================== -->
 
-            <a asp-controller="Sale"
-               asp-action="Index"
-               class="stat-card dashboard-link">
+        <a asp-controller="Sale"
+           asp-action="Index"
+           class="stat-card stat-green">
+
+            <div class="stat-card-top">
 
                 <div class="stat-icon">
-                    🛒
+                    💰
                 </div>
 
-                <div>
+                <span class="stat-arrow">
+                    →
+                </span>
 
-                    <span>
-                        Today's Sales
-                    </span>
+            </div>
 
-                    <h2>
-                        Rs. @Model.TodaySales.ToString("N2")
-                    </h2>
+            <div class="stat-content">
 
-                    <small>
-                        Sales generated today
-                    </small>
+                <span class="stat-label">
+                    Today's Sales
+                </span>
 
-                </div>
+                <strong class="stat-number sales-number">
+                    Rs. @Model.TodaySales.ToString("N2")
+                </strong>
 
-            </a>
+                <span class="stat-description">
+                    Net sales for today
+                </span>
+
+            </div>
+
+        </a>
 
 
-            <!-- LOW STOCK -->
+        <!-- =====================================================
+             LOW STOCK
+        ====================================================== -->
 
-            <a asp-controller="Medicine"
-               asp-action="Index"
-               class="stat-card dashboard-link">
+        <a asp-controller="Medicine"
+           asp-action="Index"
+           class="stat-card stat-orange">
+
+            <div class="stat-card-top">
 
                 <div class="stat-icon">
                     ⚠️
                 </div>
 
-                <div>
+                <span class="stat-arrow">
+                    →
+                </span>
 
-                    <span>
-                        Low Stock
-                    </span>
+            </div>
 
-                    <h2>
-                        @Model.LowStockMedicines
-                    </h2>
+            <div class="stat-content">
 
-                    <small>
-                        Medicines need attention
-                    </small>
+                <span class="stat-label">
+                    Low Stock
+                </span>
 
-                </div>
+                <strong class="stat-number">
+                    @Model.LowStockMedicines
+                </strong>
 
-            </a>
+                <span class="stat-description">
+                    Medicines need attention
+                </span>
+
+            </div>
+
+        </a>
 
 
-            <!-- EXPIRING SOON -->
+        <!-- =====================================================
+             EXPIRING SOON
+        ====================================================== -->
 
-            <a asp-controller="Medicine"
-               asp-action="Index"
-               class="stat-card dashboard-link">
+        <a asp-controller="Medicine"
+           asp-action="Index"
+           class="stat-card stat-red">
+
+            <div class="stat-card-top">
 
                 <div class="stat-icon">
                     ⏰
                 </div>
 
-                <div>
-
-                    <span>
-                        Expiring Soon
-                    </span>
-
-                    <h2>
-                        @Model.ExpiringSoonMedicines
-                    </h2>
-
-                    <small>
-                        Within 30 days
-                    </small>
-
-                </div>
-
-            </a>
-
-
-        </section>
-
-
-        <!-- ==========================================
-             CONTENT CARDS
-        ========================================== -->
-
-        <section class="dashboard-grid">
-
-
-            <!-- ==========================================
-                 QUICK ACTIONS
-            ========================================== -->
-        
-            <!-- Quick Actions -->
-
-            <div class="dashboard-card">
-
-                <div class="card-header">
-
-                    <div>
-                        <h2>Quick Actions</h2>
-
-                        <p>
-                            Common pharmacy operations
-                        </p>
-                    </div>
-
-                </div>
-
-
-                <div class="quick-actions">
-
-                    <!-- ADD MEDICINE -->
-
-                    <a asp-controller="Medicine"
-                    asp-action="Create"
-                    class="action-button">
-
-                        <span>➕</span>
-
-                        <div>
-                            <strong>
-                                Add Medicine
-                            </strong>
-
-                            <small>
-                                Add new medicine to inventory
-                            </small>
-                        </div>
-
-                    </a>
-
-
-                    <!-- NEW SALE -->
-
-                    <a asp-controller="Sale"
-                    asp-action="Create"
-                    class="action-button">
-
-                        <span>🛒</span>
-
-                        <div>
-                            <strong>
-                                New Sale
-                            </strong>
-
-                            <small>
-                                Create a new medicine sale
-                            </small>
-                        </div>
-
-                    </a>
-
-
-                    <!-- PURCHASE -->
-
-                    <a asp-controller="Purchase"
-                    asp-action="Create"
-                    class="action-button">
-
-                        <span>📦</span>
-
-                        <div>
-                            <strong>
-                                Purchase
-                            </strong>
-
-                            <small>
-                                Record medicine purchase
-                            </small>
-                        </div>
-
-                    </a>
-
-
-                    <!-- RETURN MEDICINE -->
-
-                    <a asp-controller="Return"
-                    asp-action="Create"
-                    class="action-button">
-
-                        <span>↩️</span>
-
-                        <div>
-                            <strong>
-                                Return Medicine
-                            </strong>
-
-                            <small>
-                                Process a medicine return
-                            </small>
-                        </div>
-
-                    </a>
-
-                </div>
+                <span class="stat-arrow">
+                    →
+                </span>
 
             </div>
-            <!-- ==========================================
-                 INVENTORY ALERTS
-            ========================================== -->
 
-            <div class="dashboard-card">
+            <div class="stat-content">
 
-                <div class="card-header">
+                <span class="stat-label">
+                    Expiring Soon
+                </span>
 
-                    <div>
+                <strong class="stat-number">
+                    @Model.ExpiringSoonMedicines
+                </strong>
 
-                        <h2>
-                            Inventory Alerts
-                        </h2>
-
-                        <p>
-                            Items requiring attention
-                        </p>
-
-                    </div>
-
-
-                    <span class="alert-count">
-
-                        @(Model.LowStockMedicines +
-                          Model.ExpiringSoonMedicines)
-
-                    </span>
-
-                </div>
-
-
-                <div class="empty-state">
-
-                    @if (Model.LowStockMedicines == 0 &&
-                         Model.ExpiringSoonMedicines == 0)
-                    {
-                        <div class="empty-icon">
-                            ✓
-                        </div>
-
-                        <h3>
-                            All Good!
-                        </h3>
-
-                        <p>
-                            No inventory alerts at the moment.
-                        </p>
-                    }
-                    else
-                    {
-                        <div class="empty-icon">
-                            ⚠️
-                        </div>
-
-                        <h3>
-                            Attention Required
-                        </h3>
-
-                        <p>
-                            Some medicines need your attention.
-                        </p>
-                    }
-
-                </div>
+                <span class="stat-description">
+                    Expiring within 30 days
+                </span>
 
             </div>
 
+        </a>
 
-        </section>
+    </section>
 
 
-        <!-- ==========================================
-             RECENT SALES
-        ========================================== -->
+    <!-- =========================================================
+         MAIN DASHBOARD GRID
+    ========================================================== -->
 
-        <section class="dashboard-card recent-sales">
+    <section class="dashboard-main-grid">
 
+
+        <!-- =====================================================
+             QUICK ACTIONS
+        ====================================================== -->
+
+        <div class="dashboard-card quick-actions-card">
 
             <div class="card-header">
 
                 <div>
 
+                    <span class="card-eyebrow">
+                        SHORTCUTS
+                    </span>
+
                     <h2>
-                        Recent Sales
+                        Quick Actions
                     </h2>
 
                     <p>
-                        Latest transactions
+                        Common pharmacy operations
                     </p>
 
                 </div>
 
+            </div>
+
+
+            <div class="quick-actions-grid">
+
+
+                <!-- ADD MEDICINE -->
+
+                <a asp-controller="Medicine"
+                   asp-action="Create"
+                   class="quick-action">
+
+                    <div class="quick-action-icon">
+                        ➕
+                    </div>
+
+                    <div class="quick-action-content">
+
+                        <strong>
+                            Add Medicine
+                        </strong>
+
+                        <span>
+                            Add a new medicine
+                        </span>
+
+                    </div>
+
+                    <span class="quick-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+                <!-- NEW SALE -->
 
                 <a asp-controller="Sale"
-                   asp-action="Index">
+                   asp-action="Create"
+                   class="quick-action">
 
-                    View All →
+                    <div class="quick-action-icon">
+                        🛒
+                    </div>
+
+                    <div class="quick-action-content">
+
+                        <strong>
+                            New Sale
+                        </strong>
+
+                        <span>
+                            Create a medicine sale
+                        </span>
+
+                    </div>
+
+                    <span class="quick-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+                <!-- PURCHASE -->
+
+                <a asp-controller="Purchase"
+                   asp-action="Create"
+                   class="quick-action">
+
+                    <div class="quick-action-icon">
+                        📦
+                    </div>
+
+                    <div class="quick-action-content">
+
+                        <strong>
+                            Purchase
+                        </strong>
+
+                        <span>
+                            Record stock purchase
+                        </span>
+
+                    </div>
+
+                    <span class="quick-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+                <!-- RETURN -->
+
+                <a asp-controller="Return"
+                   asp-action="Create"
+                   class="quick-action">
+
+                    <div class="quick-action-icon">
+                        ↩️
+                    </div>
+
+                    <div class="quick-action-content">
+
+                        <strong>
+                            Return Medicine
+                        </strong>
+
+                        <span>
+                            Process a customer return
+                        </span>
+
+                    </div>
+
+                    <span class="quick-arrow">
+                        →
+                    </span>
 
                 </a>
 
             </div>
 
+        </div>
 
-            @if (Model.TotalSales > 0)
-            {
-                <div class="empty-state">
 
-                    <div class="empty-icon">
-                        🧾
-                    </div>
+        <!-- =====================================================
+             INVENTORY ALERTS
+        ====================================================== -->
 
-                    <h3>
-                        @Model.TotalSales Sales Recorded
-                    </h3>
+        <div class="dashboard-card alerts-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <span class="card-eyebrow">
+                        INVENTORY
+                    </span>
+
+                    <h2>
+                        Inventory Alerts
+                    </h2>
 
                     <p>
-                        Your sales data is connected successfully.
+                        Items requiring attention
                     </p>
 
                 </div>
-            }
-            else
-            {
-                <div class="empty-state">
 
-                    <div class="empty-icon">
-                        🧾
+                <span class="alert-count
+                    @(hasAlerts ? "has-alerts" : "no-alerts")">
+
+                    @totalAlerts
+
+                </span>
+
+            </div>
+
+
+            <div class="alert-list">
+
+
+                <!-- LOW STOCK ALERT -->
+
+                <a asp-controller="Medicine"
+                   asp-action="Index"
+                   class="alert-item">
+
+                    <div class="alert-item-icon low-stock-icon">
+                        ⚠️
                     </div>
 
-                    <h3>
-                        No Recent Sales
-                    </h3>
+                    <div class="alert-item-content">
+
+                        <strong>
+                            Low Stock Medicines
+                        </strong>
+
+                        <span>
+                            Medicines at or below the stock threshold
+                        </span>
+
+                    </div>
+
+                    <strong class="alert-value">
+                        @Model.LowStockMedicines
+                    </strong>
+
+                </a>
+
+
+                <!-- EXPIRY ALERT -->
+
+                <a asp-controller="Medicine"
+                   asp-action="Index"
+                   class="alert-item">
+
+                    <div class="alert-item-icon expiry-icon">
+                        ⏰
+                    </div>
+
+                    <div class="alert-item-content">
+
+                        <strong>
+                            Expiring Soon
+                        </strong>
+
+                        <span>
+                            Medicines expiring within 30 days
+                        </span>
+
+                    </div>
+
+                    <strong class="alert-value">
+                        @Model.ExpiringSoonMedicines
+                    </strong>
+
+                </a>
+
+
+                <!-- OVERALL STATUS -->
+
+                @if (!hasAlerts)
+                {
+                    <div class="inventory-good">
+
+                        <div class="good-icon">
+                            ✓
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Inventory Looks Good
+                            </strong>
+
+                            <span>
+                                No low-stock or expiry alerts right now.
+                            </span>
+
+                        </div>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="inventory-warning">
+
+                        <div class="warning-icon">
+                            !
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                Attention Required
+                            </strong>
+
+                            <span>
+                                Review the inventory alerts above.
+                            </span>
+
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         SALES OVERVIEW
+    ========================================================== -->
+
+    <section class="dashboard-card sales-overview-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <span class="card-eyebrow">
+                    SALES
+                </span>
+
+                <h2>
+                    Sales Overview
+                </h2>
+
+                <p>
+                    Your pharmacy's sales activity
+                </p>
+
+            </div>
+
+
+            <a asp-controller="Sale"
+               asp-action="Index"
+               class="view-all-link">
+
+                View Sales
+                <span>→</span>
+
+            </a>
+
+        </div>
+
+
+        <div class="sales-summary">
+
+
+            <!-- TODAY -->
+
+            <div class="sales-summary-item">
+
+                <div class="sales-summary-icon">
+                    💰
+                </div>
+
+                <div>
+
+                    <span>
+                        Today's Net Sales
+                    </span>
+
+                    <strong>
+                        Rs. @Model.TodaySales.ToString("N2")
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- TOTAL SALES -->
+
+            <div class="sales-summary-item">
+
+                <div class="sales-summary-icon">
+                    🧾
+                </div>
+
+                <div>
+
+                    <span>
+                        Total Sales
+                    </span>
+
+                    <strong>
+                        @Model.TotalSales
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- SALES STATUS -->
+
+            <div class="sales-summary-status">
+
+                @if (Model.TotalSales > 0)
+                {
+                    <div class="status-icon status-success">
+                        ✓
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Sales system active
+                        </strong>
+
+                        <span>
+                            Your sales records are available.
+                        </span>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="status-icon status-neutral">
+                        —
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            No sales recorded yet
+                        </strong>
+
+                        <span>
+                            Create your first sale to begin tracking activity.
+                        </span>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         BOTTOM INFORMATION
+    ========================================================== -->
+
+    <section class="dashboard-bottom-grid">
+
+
+        <!-- =====================================================
+             PHARMACY SYSTEM
+        ====================================================== -->
+
+        <div class="dashboard-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <span class="card-eyebrow">
+                        SYSTEM
+                    </span>
+
+                    <h2>
+                        Pharmacy Management
+                    </h2>
 
                     <p>
-                        Sales transactions will appear here.
+                        Manage your pharmacy efficiently
                     </p>
 
                 </div>
-            }
+
+            </div>
 
 
-        </section>
+            <div class="system-links">
+
+                <a asp-controller="Medicine"
+                   asp-action="Index"
+                   class="system-link">
+
+                    <span>
+                        💊
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Medicine Management
+                        </strong>
+
+                        <small>
+                            Manage medicines and inventory
+                        </small>
+
+                    </div>
+
+                    <b>
+                        →
+                    </b>
+
+                </a>
 
 
-    </main>
+                <a asp-controller="Stock"
+                   asp-action="Index"
+                   class="system-link">
+
+                    <span>
+                        📦
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Stock Management
+                        </strong>
+
+                        <small>
+                            Monitor and update stock
+                        </small>
+
+                    </div>
+
+                    <b>
+                        →
+                    </b>
+
+                </a>
+
+
+                <a asp-controller="Reports"
+                   asp-action="Index"
+                   class="system-link">
+
+                    <span>
+                        📊
+                    </span>
+
+                    <div>
+
+                        <strong>
+                            Reports
+                        </strong>
+
+                        <small>
+                            View pharmacy reports
+                        </small>
+
+                    </div>
+
+                    <b>
+                        →
+                    </b>
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             ACCOUNT
+        ====================================================== -->
+
+        <div class="dashboard-card account-card">
+
+            <div class="card-header">
+
+                <div>
+
+                    <span class="card-eyebrow">
+                        ACCOUNT
+                    </span>
+
+                    <h2>
+                        Account
+                    </h2>
+
+                    <p>
+                        Your current account information
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="account-info">
+
+                <div class="account-avatar">
+                    @firstLetter
+                </div>
+
+                <div>
+
+                    <strong>
+                        @username
+                    </strong>
+
+                    <span>
+                        @role
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="account-actions">
+
+                <a asp-controller="Settings"
+                   asp-action="Index"
+                   class="account-action">
+
+                    ⚙ Settings
+
+                </a>
+
+                <a asp-controller="Settings"
+                   asp-action="ChangePassword"
+                   class="account-action">
+
+                    🔐 Change Password
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         FOOTER
+    ========================================================== -->
+
+    <div class="dashboard-footer">
+
+        <span>
+            PharmaCare Pharmacy Management System
+        </span>
+
+        <span>
+            Dashboard
+        </span>
+
+    </div>
 
 </div>
 
 
 <style>
 
-    /* ==========================================
-       DASHBOARD LINKS
-    ========================================== */
+    /* =========================================================
+       PAGE
+    ========================================================== */
 
-    .dashboard-link
+    .dashboard-page
     {
-        text-decoration: none;
-
-        color: inherit;
-
-        cursor: pointer;
-
-        transition: .2s;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0 0 35px;
+        box-sizing: border-box;
     }
 
 
-    .dashboard-link:hover
-    {
-        text-decoration: none;
+    /* =========================================================
+       HEADER
+    ========================================================== */
 
-        color: inherit;
-
-        transform: translateY(-2px);
-
-        box-shadow:
-            0 6px 20px
-            rgba(15,23,42,.08);
-    }
-
-
-    /* ==========================================
-       QUICK ACTION BUTTONS
-    ========================================== */
-
-    .action-button
+    .dashboard-header
     {
         display: flex;
 
         align-items: center;
 
-        gap: 14px;
+        gap: 25px;
 
-        width: 100%;
+        margin-bottom: 25px;
+    }
 
-        box-sizing: border-box;
 
-        padding: 15px;
+    .dashboard-title
+    {
+        min-width: 0;
+    }
+
+
+    .dashboard-eyebrow,
+    .card-eyebrow
+    {
+        display: block;
+
+        color: #2563eb;
+
+        font-size: 10px;
+
+        font-weight: 800;
+
+        letter-spacing: 1px;
+
+        margin-bottom: 5px;
+    }
+
+
+    .dashboard-title h1
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 30px;
+
+        font-weight: 750;
+    }
+
+
+    .dashboard-title p
+    {
+        margin: 6px 0 0;
+
+        color: #64748b;
+
+        font-size: 13px;
+    }
+
+
+    /* =========================================================
+       MESSAGE
+    ========================================================== */
+
+    .dashboard-message
+    {
+        display: flex;
+
+        align-items: flex-start;
+
+        gap: 12px;
+
+        padding: 13px 15px;
+
+        margin-bottom: 18px;
+
+        border-radius: 10px;
+    }
+
+
+    .error-message
+    {
+        background: #fef2f2;
+
+        border: 1px solid #fecaca;
+
+        color: #b91c1c;
+    }
+
+
+    .message-icon
+    {
+        font-size: 18px;
+    }
+
+
+    .dashboard-message strong
+    {
+        font-size: 12px;
+    }
+
+
+    .dashboard-message p
+    {
+        margin: 3px 0 0;
+
+        font-size: 11px;
+    }
+
+
+    /* =========================================================
+       STATISTICS
+    ========================================================== */
+
+    .stats-grid
+    {
+        display: grid;
+
+        grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+
+        gap: 16px;
+
+        margin-bottom: 18px;
+    }
+
+
+    .stat-card
+    {
+        position: relative;
+
+        display: block;
+
+        min-width: 0;
+
+        padding: 20px;
 
         background: white;
 
         border: 1px solid #e2e8f0;
 
-        border-radius: 10px;
-
-        color: #172554;
+        border-radius: 14px;
 
         text-decoration: none;
 
-        cursor: pointer;
+        color: inherit;
 
-        text-align: left;
+        overflow: hidden;
+
+        transition:
+            transform .2s,
+            box-shadow .2s,
+            border-color .2s;
+    }
+
+
+    .stat-card:hover
+    {
+        transform: translateY(-3px);
+
+        box-shadow:
+            0 8px 25px
+            rgba(15,23,42,.08);
+
+        text-decoration: none;
+
+        color: inherit;
+    }
+
+
+    .stat-card-top
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        margin-bottom: 17px;
+    }
+
+
+    .stat-icon
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 42px;
+        height: 42px;
+
+        border-radius: 10px;
+
+        font-size: 19px;
+    }
+
+
+    .stat-blue .stat-icon
+    {
+        background: #eff6ff;
+    }
+
+
+    .stat-green .stat-icon
+    {
+        background: #f0fdf4;
+    }
+
+
+    .stat-orange .stat-icon
+    {
+        background: #fff7ed;
+    }
+
+
+    .stat-red .stat-icon
+    {
+        background: #fef2f2;
+    }
+
+
+    .stat-arrow
+    {
+        color: #94a3b8;
+
+        font-size: 16px;
 
         transition: .2s;
     }
 
 
-    .action-button:hover
+    .stat-card:hover .stat-arrow
+    {
+        color: #2563eb;
+
+        transform: translateX(3px);
+    }
+
+
+    .stat-label
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 11px;
+
+        font-weight: 600;
+    }
+
+
+    .stat-number
+    {
+        display: block;
+
+        margin-top: 5px;
+
+        color: #172554;
+
+        font-size: 25px;
+
+        font-weight: 750;
+
+        line-height: 1.2;
+    }
+
+
+    .sales-number
+    {
+        font-size: 21px;
+    }
+
+
+    .stat-description
+    {
+        display: block;
+
+        margin-top: 6px;
+
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+
+    /* =========================================================
+       MAIN GRID
+    ========================================================== */
+
+    .dashboard-main-grid
+    {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.45fr)
+            minmax(0, 1fr);
+
+        gap: 18px;
+
+        margin-bottom: 18px;
+    }
+
+
+    /* =========================================================
+       CARD
+    ========================================================== */
+
+    .dashboard-card
+    {
+        min-width: 0;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 14px;
+
+        padding: 22px;
+
+        box-sizing: border-box;
+    }
+
+
+    .card-header
+    {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: flex-start;
+
+        gap: 15px;
+
+        margin-bottom: 18px;
+    }
+
+
+    .card-header h2
+    {
+        margin: 0;
+
+        color: #172554;
+
+        font-size: 17px;
+
+        font-weight: 700;
+    }
+
+
+    .card-header p
+    {
+        margin: 4px 0 0;
+
+        color: #64748b;
+
+        font-size: 11px;
+    }
+
+
+    /* =========================================================
+       QUICK ACTIONS
+    ========================================================== */
+
+    .quick-actions-grid
+    {
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 11px;
+    }
+
+
+    .quick-action
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        min-width: 0;
+
+        padding: 13px;
+
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 10px;
+
+        text-decoration: none;
+
+        color: #172554;
+
+        transition: .2s;
+    }
+
+
+    .quick-action:hover
+    {
+        background: white;
+
+        border-color: #bfdbfe;
+
+        box-shadow:
+            0 4px 12px
+            rgba(15,23,42,.05);
+
+        text-decoration: none;
+
+        color: #172554;
+
+        transform: translateY(-1px);
+    }
+
+
+    .quick-action-icon
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        flex-shrink: 0;
+
+        width: 37px;
+        height: 37px;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        font-size: 17px;
+    }
+
+
+    .quick-action-content
+    {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .quick-action-content strong
+    {
+        display: block;
+
+        color: #172554;
+
+        font-size: 11px;
+    }
+
+
+    .quick-action-content span
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        overflow: hidden;
+
+        color: #64748b;
+
+        font-size: 9px;
+
+        text-overflow: ellipsis;
+
+        white-space: nowrap;
+    }
+
+
+    .quick-arrow
+    {
+        flex-shrink: 0;
+
+        color: #94a3b8;
+
+        font-size: 13px;
+    }
+
+
+    /* =========================================================
+       ALERTS
+    ========================================================== */
+
+    .alert-count
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        min-width: 28px;
+
+        height: 28px;
+
+        padding: 0 7px;
+
+        border-radius: 8px;
+
+        font-size: 11px;
+
+        font-weight: 700;
+    }
+
+
+    .has-alerts
+    {
+        background: #fff7ed;
+
+        color: #c2410c;
+    }
+
+
+    .no-alerts
+    {
+        background: #f0fdf4;
+
+        color: #15803d;
+    }
+
+
+    .alert-list
+    {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 9px;
+    }
+
+
+    .alert-item
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 11px;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        color: inherit;
+
+        transition: .2s;
+    }
+
+
+    .alert-item:hover
+    {
+        background: #f8fafc;
+
+        text-decoration: none;
+
+        color: inherit;
+
+        border-color: #cbd5e1;
+    }
+
+
+    .alert-item-icon
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 34px;
+        height: 34px;
+
+        flex-shrink: 0;
+
+        border-radius: 8px;
+
+        font-size: 15px;
+    }
+
+
+    .low-stock-icon
+    {
+        background: #fff7ed;
+    }
+
+
+    .expiry-icon
+    {
+        background: #fef2f2;
+    }
+
+
+    .alert-item-content
+    {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .alert-item-content strong
+    {
+        display: block;
+
+        color: #334155;
+
+        font-size: 10px;
+    }
+
+
+    .alert-item-content span
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #94a3b8;
+
+        font-size: 8px;
+    }
+
+
+    .alert-value
+    {
+        color: #172554;
+
+        font-size: 13px;
+    }
+
+
+    .inventory-good,
+    .inventory-warning
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 11px;
+
+        border-radius: 9px;
+    }
+
+
+    .inventory-good
+    {
+        background: #f0fdf4;
+
+        border: 1px solid #dcfce7;
+    }
+
+
+    .inventory-warning
+    {
+        background: #fff7ed;
+
+        border: 1px solid #fed7aa;
+    }
+
+
+    .good-icon,
+    .warning-icon
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 30px;
+        height: 30px;
+
+        flex-shrink: 0;
+
+        border-radius: 50%;
+
+        font-size: 13px;
+
+        font-weight: 800;
+    }
+
+
+    .good-icon
+    {
+        background: #dcfce7;
+
+        color: #15803d;
+    }
+
+
+    .warning-icon
+    {
+        background: #ffedd5;
+
+        color: #c2410c;
+    }
+
+
+    .inventory-good strong,
+    .inventory-warning strong
+    {
+        display: block;
+
+        color: #334155;
+
+        font-size: 10px;
+    }
+
+
+    .inventory-good span,
+    .inventory-warning span
+    {
+        display: block;
+
+        margin-top: 2px;
+
+        color: #64748b;
+
+        font-size: 9px;
+    }
+
+
+    /* =========================================================
+       SALES OVERVIEW
+    ========================================================== */
+
+    .sales-overview-card
+    {
+        margin-bottom: 18px;
+    }
+
+
+    .view-all-link
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        color: #2563eb;
+
+        text-decoration: none;
+
+        font-size: 10px;
+
+        font-weight: 700;
+    }
+
+
+    .view-all-link:hover
+    {
+        color: #1d4ed8;
+
+        text-decoration: none;
+    }
+
+
+    .sales-summary
+    {
+        display: grid;
+
+        grid-template-columns:
+            1fr 1fr 1.5fr;
+
+        gap: 12px;
+    }
+
+
+    .sales-summary-item,
+    .sales-summary-status
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        padding: 15px;
+
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 10px;
+    }
+
+
+    .sales-summary-icon
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 36px;
+        height: 36px;
+
+        flex-shrink: 0;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        font-size: 16px;
+    }
+
+
+    .sales-summary-item span
+    {
+        display: block;
+
+        color: #64748b;
+
+        font-size: 9px;
+    }
+
+
+    .sales-summary-item strong
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #172554;
+
+        font-size: 15px;
+    }
+
+
+    .status-icon
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 34px;
+        height: 34px;
+
+        flex-shrink: 0;
+
+        border-radius: 50%;
+
+        font-size: 13px;
+
+        font-weight: 800;
+    }
+
+
+    .status-success
+    {
+        background: #dcfce7;
+
+        color: #15803d;
+    }
+
+
+    .status-neutral
+    {
+        background: #e2e8f0;
+
+        color: #64748b;
+    }
+
+
+    .sales-summary-status strong
+    {
+        display: block;
+
+        color: #334155;
+
+        font-size: 10px;
+    }
+
+
+    .sales-summary-status span
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #64748b;
+
+        font-size: 9px;
+    }
+
+
+    /* =========================================================
+       BOTTOM GRID
+    ========================================================== */
+
+    .dashboard-bottom-grid
+    {
+        display: grid;
+
+        grid-template-columns:
+            minmax(0, 1.5fr)
+            minmax(0, 1fr);
+
+        gap: 18px;
+
+        margin-bottom: 20px;
+    }
+
+
+    /* =========================================================
+       SYSTEM LINKS
+    ========================================================== */
+
+    .system-links
+    {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 7px;
+    }
+
+
+    .system-link
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        padding: 10px;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 9px;
+
+        text-decoration: none;
+
+        color: inherit;
+
+        transition: .2s;
+    }
+
+
+    .system-link:hover
+    {
+        background: #f8fafc;
+
+        border-color: #cbd5e1;
+
+        color: inherit;
+
+        text-decoration: none;
+    }
+
+
+    .system-link > span
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 33px;
+        height: 33px;
+
+        flex-shrink: 0;
+
+        background: #eff6ff;
+
+        border-radius: 8px;
+
+        font-size: 15px;
+    }
+
+
+    .system-link div
+    {
+        min-width: 0;
+
+        flex: 1;
+    }
+
+
+    .system-link strong
+    {
+        display: block;
+
+        color: #334155;
+
+        font-size: 10px;
+    }
+
+
+    .system-link small
+    {
+        display: block;
+
+        margin-top: 2px;
+
+        color: #94a3b8;
+
+        font-size: 8px;
+    }
+
+
+    .system-link b
+    {
+        color: #94a3b8;
+
+        font-size: 12px;
+    }
+
+
+    /* =========================================================
+       ACCOUNT
+    ========================================================== */
+
+    .account-info
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        padding: 14px;
+
+        background: #f8fafc;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 10px;
+
+        margin-bottom: 10px;
+    }
+
+
+    .account-avatar
+    {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        width: 42px;
+        height: 42px;
+
+        background: #eff6ff;
+
+        color: #2563eb;
+
+        border-radius: 50%;
+
+        font-size: 15px;
+
+        font-weight: 800;
+    }
+
+
+    .account-info strong
+    {
+        display: block;
+
+        color: #172554;
+
+        font-size: 11px;
+    }
+
+
+    .account-info span
+    {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #64748b;
+
+        font-size: 9px;
+    }
+
+
+    .account-actions
+    {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 7px;
+    }
+
+
+    .account-action
+    {
+        padding: 9px;
+
+        background: white;
+
+        border: 1px solid #e2e8f0;
+
+        border-radius: 8px;
+
+        color: #475569;
+
+        text-decoration: none;
+
+        text-align: center;
+
+        font-size: 9px;
+
+        font-weight: 600;
+
+        transition: .2s;
+    }
+
+
+    .account-action:hover
     {
         background: #f8fafc;
 
@@ -527,93 +2059,112 @@
         color: #172554;
 
         text-decoration: none;
-
-        transform: translateY(-1px);
     }
 
 
-    .action-button > span
+    /* =========================================================
+       FOOTER
+    ========================================================== */
+
+    .dashboard-footer
     {
         display: flex;
 
+        justify-content: space-between;
+
         align-items: center;
 
-        justify-content: center;
+        padding: 14px 3px 0;
 
-        width: 40px;
+        border-top: 1px solid #e2e8f0;
 
-        height: 40px;
+        color: #94a3b8;
 
-        flex-shrink: 0;
-
-        background: #f8fafc;
-
-        border-radius: 9px;
-
-        font-size: 19px;
+        font-size: 9px;
     }
 
 
-    .action-button strong
+    /* =========================================================
+       RESPONSIVE
+    ========================================================== */
+
+    @@media (max-width: 1200px)
     {
-        display: block;
+        .stats-grid
+        {
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+        }
 
-        color: #172554;
 
-        font-size: 13px;
+        .dashboard-main-grid,
+        .dashboard-bottom-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .sales-summary
+        {
+            grid-template-columns:
+                1fr 1fr;
+        }
+
+
+        .sales-summary-status
+        {
+            grid-column: 1 / -1;
+        }
     }
 
-
-    .action-button small
-    {
-        display: block;
-
-        margin-top: 4px;
-
-        color: #64748b;
-
-        font-size: 11px;
-    }
-
-
-    /* ==========================================
-       RECENT SALES LINK
-    ========================================== */
-
-    .recent-sales .card-header a
-    {
-        color: #2563eb;
-
-        text-decoration: none;
-
-        font-size: 12px;
-
-        font-weight: 600;
-    }
-
-
-    .recent-sales .card-header a:hover
-    {
-        color: #1d4ed8;
-
-        text-decoration: none;
-    }
-
-
-    /* ==========================================
-       MOBILE
-    ========================================== */
 
     @@media (max-width: 700px)
     {
-        .dashboard-link
+        .dashboard-header
         {
-            width: 100%;
+            flex-direction: column;
+
+            align-items: flex-start;
         }
 
-        .action-button
+
+        .stats-grid
         {
-            width: 100%;
+            grid-template-columns: 1fr;
+        }
+
+
+        .quick-actions-grid
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .sales-summary
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .sales-summary-status
+        {
+            grid-column: auto;
+        }
+
+
+        .account-actions
+        {
+            grid-template-columns: 1fr;
+        }
+
+
+        .dashboard-footer
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+
+            gap: 5px;
         }
     }
 

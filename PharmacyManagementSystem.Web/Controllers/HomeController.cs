@@ -10,18 +10,25 @@ namespace PharmacyManagementSystem.Web.Controllers
     [Authorize]
     public class HomeController : Controller
     {
+        // =========================================================
+        // DASHBOARD
+        // =========================================================
+
+        [HttpGet]
         public IActionResult Index()
         {
             DashboardViewModel dashboard = new DashboardViewModel();
 
-            // ==========================================
-            // GET CURRENT PHARMACY
-            // ==========================================
+            // =====================================================
+            // GET CURRENT PHARMACY ID
+            // =====================================================
 
             string? pharmacyIdClaim =
                 User.FindFirstValue("PharmacyId");
 
-            if (!int.TryParse(pharmacyIdClaim, out int pharmacyId) ||
+            if (!int.TryParse(
+                    pharmacyIdClaim,
+                    out int pharmacyId) ||
                 pharmacyId <= 0)
             {
                 return RedirectToAction(
@@ -39,9 +46,51 @@ namespace PharmacyManagementSystem.Web.Controllers
                     connection.Open();
 
 
-                    // ==========================================
+                    // =================================================
+                    // GET PHARMACY LOW STOCK THRESHOLD
+                    // =================================================
+
+                    int lowStockThreshold = 10;
+
+                    string settingsQuery =
+                        @"
+                        SELECT
+                            COALESCE(low_stock_threshold, 10)
+                        FROM pharmacies
+                        WHERE id = @pharmacy_id
+                        LIMIT 1";
+
+                    using (MySqlCommand command =
+                           new MySqlCommand(
+                               settingsQuery,
+                               connection))
+                    {
+                        command.Parameters.AddWithValue(
+                            "@pharmacy_id",
+                            pharmacyId
+                        );
+
+                        object? result =
+                            command.ExecuteScalar();
+
+                        if (result != null &&
+                            result != DBNull.Value)
+                        {
+                            lowStockThreshold =
+                                Convert.ToInt32(result);
+                        }
+                    }
+
+                    // Safety limit
+                    if (lowStockThreshold < 1)
+                    {
+                        lowStockThreshold = 1;
+                    }
+
+
+                    // =================================================
                     // TOTAL MEDICINES
-                    // ==========================================
+                    // =================================================
 
                     string medicineQuery =
                         @"
@@ -66,16 +115,16 @@ namespace PharmacyManagementSystem.Web.Controllers
                     }
 
 
-                    // ==========================================
+                    // =================================================
                     // LOW STOCK MEDICINES
-                    // ==========================================
+                    // =================================================
 
                     string lowStockQuery =
                         @"
                         SELECT COUNT(*)
                         FROM medicines
                         WHERE pharmacy_id = @pharmacy_id
-                        AND quantity <= 10";
+                        AND quantity <= @low_stock_threshold";
 
                     using (MySqlCommand command =
                            new MySqlCommand(
@@ -87,6 +136,11 @@ namespace PharmacyManagementSystem.Web.Controllers
                             pharmacyId
                         );
 
+                        command.Parameters.AddWithValue(
+                            "@low_stock_threshold",
+                            lowStockThreshold
+                        );
+
                         dashboard.LowStockMedicines =
                             Convert.ToInt32(
                                 command.ExecuteScalar()
@@ -94,9 +148,15 @@ namespace PharmacyManagementSystem.Web.Controllers
                     }
 
 
-                    // ==========================================
+                    // =================================================
                     // EXPIRING SOON MEDICINES
-                    // ==========================================
+                    // =================================================
+                    //
+                    // Medicines expiring from today through
+                    // the next 30 days.
+                    //
+                    // Expired medicines are NOT included here.
+                    // =================================================
 
                     string expiryQuery =
                         @"
@@ -124,15 +184,18 @@ namespace PharmacyManagementSystem.Web.Controllers
                     }
 
 
-                    // ==========================================
+                    // =================================================
                     // TODAY'S SALES
+                    // =================================================
                     //
-                    // Sales are already directly linked
-                    // to pharmacy_id.
+                    // Net sales today
+                    // MINUS
+                    // refunds processed today.
                     //
-                    // Refunds do NOT have pharmacy_id,
-                    // so they are connected through sales.
-                    // ==========================================
+                    // Refunds are linked to sales through sale_id,
+                    // so pharmacy isolation is still enforced through
+                    // the parent sales record.
+                    // =================================================
 
                     string todaySalesQuery =
                         @"
@@ -176,9 +239,9 @@ namespace PharmacyManagementSystem.Web.Controllers
                     }
 
 
-                    // ==========================================
+                    // =================================================
                     // TOTAL SALES
-                    // ==========================================
+                    // =================================================
 
                     string totalSalesQuery =
                         @"
@@ -208,6 +271,9 @@ namespace PharmacyManagementSystem.Web.Controllers
                 Console.WriteLine(
                     $"Dashboard error: {ex.Message}"
                 );
+
+                TempData["ErrorMessage"] =
+                    "Some dashboard information could not be loaded.";
             }
 
 
@@ -215,10 +281,11 @@ namespace PharmacyManagementSystem.Web.Controllers
         }
 
 
-        // ==========================================
+        // =========================================================
         // PRIVACY
-        // ==========================================
+        // =========================================================
 
+        [HttpGet]
         public IActionResult Privacy()
         {
             return View();
