@@ -10,7 +10,7 @@ The system is designed to help pharmacies manage medicines, inventory, sales, re
 
 The Pharmacy Management System follows an **ASP.NET Core MVC architecture** with a separate data storage layer and MySQL database.
 
-![Pharmacy Management System Architecture](docs/architecture.png)
+![Pharmacy Management System Architecture](PharmacyManagementSystem.Web/docs/architecture.png)
 
 ---
 
