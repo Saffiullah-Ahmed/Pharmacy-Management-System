@@ -217,10 +217,18 @@ namespace PharmacyManagementSystem.Web.Controllers
             // SIGN IN
             // ========================================================
 
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults
-                    .AuthenticationScheme,
-                principal);
+                var authenticationProperties =
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = false,
+                        AllowRefresh = false
+                    };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults
+                        .AuthenticationScheme,
+                    principal,
+                    authenticationProperties);
 
 
             // ========================================================
