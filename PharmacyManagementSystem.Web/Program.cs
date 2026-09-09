@@ -46,10 +46,11 @@ builder.Services
         options.AccessDeniedPath =
             "/Account/AccessDenied";
 
+        // Cookie expires when the browser session ends.
         options.ExpireTimeSpan =
             TimeSpan.FromHours(8);
 
-        options.SlidingExpiration = true;
+        options.SlidingExpiration = false;
     });
 
 
