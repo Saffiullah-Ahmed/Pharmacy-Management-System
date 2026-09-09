@@ -1,14 +1,11 @@
 using MySql.Data.MySqlClient;
 using PharmacyManagementSystem.Web.Models;
+using PharmacyManagementSystem.Web.Database;
 
 namespace PharmacyManagementSystem.Web.DataStorage
 {
     public static class ReturnStorage
     {
-        private static readonly string connectionString =
-            "Server=localhost;Database=pharmacy_db;Uid=root;Pwd=;";
-
-
         // ============================================================
         // LOAD RETURN HISTORY
         // ============================================================
@@ -24,8 +21,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -126,8 +122,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -236,8 +231,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -321,8 +315,8 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             if (int.TryParse(
-                    invoice,
-                    out int number))
+                invoice,
+                out int number))
             {
                 invoice =
                     $"INV-{number:D5}";
@@ -337,8 +331,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -413,8 +406,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -550,8 +542,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
             int pharmacyId)
         {
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -607,8 +598,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
             int pharmacyId)
         {
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -702,8 +692,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
@@ -853,8 +842,7 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
 
             using var connection =
-                new MySqlConnection(
-                    connectionString);
+                DatabaseConnection.GetConnection();
 
             connection.Open();
 
