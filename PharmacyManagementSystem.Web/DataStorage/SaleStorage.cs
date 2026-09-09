@@ -1,5 +1,7 @@
 using MySql.Data.MySqlClient;
+
 using PharmacyManagementSystem.Web.Models;
+
 using PharmacyManagementSystem.Web.Database;
 
 namespace PharmacyManagementSystem.Web.DataStorage
@@ -10,9 +12,11 @@ namespace PharmacyManagementSystem.Web.DataStorage
         // LOAD SALES FOR CURRENT PHARMACY
         // ==========================================================
 
-        public static List<Sale> Load(int pharmacyId)
+        public static List<Sale> Load(
+            int pharmacyId)
         {
-            var sales = new List<Sale>();
+            var sales =
+                new List<Sale>();
 
             using var connection =
                 DatabaseConnection.GetConnection();
@@ -38,7 +42,9 @@ namespace PharmacyManagementSystem.Web.DataStorage
                 ORDER BY sale_date DESC, id DESC;";
 
             using var command =
-                new MySqlCommand(sql, connection);
+                new MySqlCommand(
+                    sql,
+                    connection);
 
             command.Parameters.AddWithValue(
                 "@pharmacy_id",
@@ -49,7 +55,8 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
             while (reader.Read())
             {
-                sales.Add(MapSale(reader));
+                sales.Add(
+                    MapSale(reader));
             }
 
             reader.Close();
@@ -193,6 +200,246 @@ namespace PharmacyManagementSystem.Web.DataStorage
                     pharmacyId);
 
             return sale;
+        }
+
+
+        // ==========================================================
+        // SERVER-SIDE MEDICINE SEARCH
+        //
+        // This method intentionally returns only a small number
+        // of medicines instead of loading the entire medicines
+        // table into the browser.
+        // ==========================================================
+
+        public static List<Medicine> SearchMedicines(
+            string search,
+            int pharmacyId,
+            int limit = 20)
+        {
+            var medicines =
+                new List<Medicine>();
+
+            if (pharmacyId <= 0)
+                return medicines;
+
+            if (string.IsNullOrWhiteSpace(search))
+                return medicines;
+
+            search =
+                search.Trim();
+
+            if (search.Length < 2)
+                return medicines;
+
+            // Keep the limit controlled by the application.
+            // The controller currently sends 20.
+            limit =
+                Math.Clamp(
+                    limit,
+                    1,
+                    50);
+
+            using var connection =
+                DatabaseConnection.GetConnection();
+
+            connection.Open();
+
+            const string sql = @"
+                SELECT
+                    id,
+                    pharmacy_id,
+                    name,
+                    price,
+                    quantity
+                FROM medicines
+                WHERE pharmacy_id = @pharmacy_id
+                  AND
+                  (
+                      name LIKE @search
+                      OR CAST(id AS CHAR) LIKE @search
+                  )
+                ORDER BY
+                    CASE
+                        WHEN name = @exact_name
+                            THEN 0
+                        WHEN name LIKE @starts_with
+                            THEN 1
+                        ELSE 2
+                    END,
+                    name ASC
+                LIMIT @limit;";
+
+            using var command =
+                new MySqlCommand(
+                    sql,
+                    connection);
+
+            command.Parameters.AddWithValue(
+                "@pharmacy_id",
+                pharmacyId);
+
+            command.Parameters.AddWithValue(
+                "@search",
+                $"%{search}%");
+
+            command.Parameters.AddWithValue(
+                "@exact_name",
+                search);
+
+            command.Parameters.AddWithValue(
+                "@starts_with",
+                $"{search}%");
+
+            command.Parameters.AddWithValue(
+                "@limit",
+                limit);
+
+            using var reader =
+                command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                medicines.Add(
+                    new Medicine
+                    {
+                        Id =
+                            Convert.ToInt32(
+                                reader["id"]),
+
+                        PharmacyId =
+                            Convert.ToInt32(
+                                reader["pharmacy_id"]),
+
+                        Name =
+                            reader["name"]
+                                ?.ToString()
+                            ?? string.Empty,
+
+                        Price =
+                            Convert.ToDecimal(
+                                reader["price"]),
+
+                        Quantity =
+                            Convert.ToInt32(
+                                reader["quantity"])
+                    });
+            }
+
+            return medicines;
+        }
+
+
+        // ==========================================================
+        // GET SELECTED MEDICINES BY IDS
+        //
+        // Used when validation fails and the Create Sale page
+        // needs to rebuild the selected medicine information.
+        //
+        // IMPORTANT:
+        // pharmacy_id is always included.
+        // ==========================================================
+
+        public static List<Medicine> GetMedicinesByIds(
+            IEnumerable<int> medicineIds,
+            int pharmacyId)
+        {
+            var ids =
+                medicineIds
+                    .Where(id => id > 0)
+                    .Distinct()
+                    .ToList();
+
+            var medicines =
+                new List<Medicine>();
+
+            if (pharmacyId <= 0 ||
+                ids.Count == 0)
+            {
+                return medicines;
+            }
+
+            using var connection =
+                DatabaseConnection.GetConnection();
+
+            connection.Open();
+
+            var parameterNames =
+                new List<string>();
+
+            using var command =
+                new MySqlCommand();
+
+            command.Connection =
+                connection;
+
+            for (int i = 0;
+                 i < ids.Count;
+                 i++)
+            {
+                string parameterName =
+                    $"@medicine_id_{i}";
+
+                parameterNames.Add(
+                    parameterName);
+
+                command.Parameters.AddWithValue(
+                    parameterName,
+                    ids[i]);
+            }
+
+            command.Parameters.AddWithValue(
+                "@pharmacy_id",
+                pharmacyId);
+
+            command.CommandText = $@"
+                SELECT
+                    id,
+                    pharmacy_id,
+                    name,
+                    price,
+                    quantity
+                FROM medicines
+                WHERE pharmacy_id = @pharmacy_id
+                  AND id IN
+                  (
+                      {string.Join(
+                          ", ",
+                          parameterNames)}
+                  )
+                ORDER BY name ASC;";
+
+            using var reader =
+                command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                medicines.Add(
+                    new Medicine
+                    {
+                        Id =
+                            Convert.ToInt32(
+                                reader["id"]),
+
+                        PharmacyId =
+                            Convert.ToInt32(
+                                reader["pharmacy_id"]),
+
+                        Name =
+                            reader["name"]
+                                ?.ToString()
+                            ?? string.Empty,
+
+                        Price =
+                            Convert.ToDecimal(
+                                reader["price"]),
+
+                        Quantity =
+                            Convert.ToInt32(
+                                reader["quantity"])
+                    });
+            }
+
+            return medicines;
         }
 
 
@@ -667,8 +914,6 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
                     // --------------------------------------------------
                     // GET ACTUAL MEDICINE NAME
-                    //
-                    // medicines table uses "name".
                     // --------------------------------------------------
 
                     const string nameSql = @"
@@ -709,14 +954,6 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
                     // --------------------------------------------------
                     // INSERT SALE ITEM
-                    //
-                    // Actual database columns:
-                    //
-                    // sale_id
-                    // medicine_id
-                    // quantity
-                    // price
-                    // total
                     // --------------------------------------------------
 
                     const string itemSql = @"
@@ -768,11 +1005,6 @@ namespace PharmacyManagementSystem.Web.DataStorage
 
                     // --------------------------------------------------
                     // REDUCE STOCK
-                    //
-                    // IMPORTANT:
-                    // pharmacy_id is included in WHERE.
-                    // This prevents one pharmacy from modifying
-                    // another pharmacy's medicine stock.
                     // --------------------------------------------------
 
                     const string stockSql = @"

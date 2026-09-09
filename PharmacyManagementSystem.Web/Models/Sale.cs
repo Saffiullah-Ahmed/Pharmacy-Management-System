@@ -10,15 +10,19 @@ namespace PharmacyManagementSystem.Web.Models
         public int PharmacyId { get; set; }
 
         [Required]
-        public string InvoiceNumber { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; }
+            = string.Empty;
 
-        public DateTime SaleDate { get; set; } = DateTime.Now;
+        public DateTime SaleDate { get; set; }
+            = DateTime.Now;
+
 
         // ============================================================
         // CUSTOMER
         // ============================================================
 
         public int? CustomerId { get; set; }
+
 
         // ============================================================
         // PAYMENT
@@ -36,7 +40,9 @@ namespace PharmacyManagementSystem.Web.Models
 
         public decimal BalanceAmount { get; set; }
 
-        public bool GenerateBill { get; set; } = true;
+        public bool GenerateBill { get; set; }
+            = true;
+
 
         // ============================================================
         // SALE ITEMS

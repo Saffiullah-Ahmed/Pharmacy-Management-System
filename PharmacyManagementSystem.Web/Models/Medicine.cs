@@ -13,6 +13,14 @@ namespace PharmacyManagementSystem.Web.Models
 
 
         // ============================================================
+        // PHARMACY ID
+        // Identifies which pharmacy owns this medicine
+        // ============================================================
+
+        public int PharmacyId { get; set; }
+
+
+        // ============================================================
         // COMPANY MEDICINE ID
         // ID / code printed by the pharmaceutical company
         // This is entered manually by the user.

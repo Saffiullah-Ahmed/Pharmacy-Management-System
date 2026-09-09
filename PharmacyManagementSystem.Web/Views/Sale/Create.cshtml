@@ -5,14 +5,21 @@
 @{
     ViewData["Title"] = "Create Sale";
 
-    var medicines =
-        ViewBag.Medicines as List<Medicine>
-        ?? new List<Medicine>();
-
     var customers =
         ViewBag.Customers as List<Customer>
         ?? new List<Customer>();
+
+    var selectedMedicines =
+        ViewBag.SelectedMedicines as List<Medicine>
+        ?? new List<Medicine>();
+
+    var selectedMedicineLookup =
+        selectedMedicines
+            .ToDictionary(
+                x => x.Id,
+                x => x);
 }
+
 
 <div class="sale-page">
 
@@ -23,12 +30,17 @@
     <div class="sale-header">
 
         <div>
-            <h1>Create Sale</h1>
+
+            <h1>
+                Create Sale
+            </h1>
 
             <p>
                 Create a new medicine sale
             </p>
+
         </div>
+
 
         <a asp-action="Index"
            class="back-btn">
@@ -47,7 +59,7 @@
     @if (!ViewData.ModelState.IsValid)
     {
         <div asp-validation-summary="All"
-            class="validation-summary">
+             class="validation-summary">
         </div>
     }
 
@@ -107,7 +119,8 @@
 
                             @customer.Name
 
-                            @if (!string.IsNullOrWhiteSpace(customer.Phone))
+                            @if (!string.IsNullOrWhiteSpace(
+                                customer.Phone))
                             {
                                 <text>
                                     | @customer.Phone
@@ -144,7 +157,7 @@
                     </h2>
 
                     <p>
-                        Select medicines and enter quantities.
+                        Search for a medicine by name or medicine ID.
                     </p>
 
                 </div>
@@ -161,100 +174,215 @@
             </div>
 
 
+            <!-- ==================================================
+                 SEARCH INFORMATION
+            ================================================== -->
+
+            <div class="medicine-search-info">
+
+                <span class="search-info-icon">
+                    🔍
+                </span>
+
+                <span>
+                    Type at least 2 characters to search medicines.
+                    Only matching medicines are loaded from the server.
+                </span>
+
+            </div>
+
+
+            <!-- ==================================================
+                 MEDICINE ROWS
+            ================================================== -->
+
             <div id="medicineRows">
 
-                <div class="medicine-row">
 
-                    <div class="form-group medicine-field">
-
-                        <label>
-                            Medicine
-                        </label>
-
-
-                        <select name="Items[0].MedicineId"
-                                class="form-control medicine-select"
-                                required>
-
-                            <option value="">
-                                -- Select Medicine --
-                            </option>
-
-
-                            @foreach (var medicine in medicines)
+                @{
+                    var initialItems =
+                        Model.Items != null &&
+                        Model.Items.Count > 0
+                            ? Model.Items
+                            : new List<SaleItem>
                             {
-                                <option value="@medicine.Id"
-                                        data-price="@medicine.Price"
-                                        data-name="@medicine.Name">
+                                new SaleItem()
+                            };
+                }
 
-                                    @medicine.Name
-                                    | Stock: @medicine.Quantity
-                                    | Rs. @medicine.Price.ToString("N2")
 
-                                </option>
-                            }
+                @for (
+                    int i = 0;
+                    i < initialItems.Count;
+                    i++)
+                {
+                    var item =
+                        initialItems[i];
 
-                        </select>
+                    Medicine? selectedMedicine = null;
+
+
+                    if (item.MedicineId.HasValue)
+                    {
+                        selectedMedicineLookup.TryGetValue(
+                            item.MedicineId.Value,
+                            out selectedMedicine);
+                    }
+
+
+                    <div class="medicine-row">
+
+
+                        <!-- ======================================
+                             MEDICINE SEARCH
+                        ======================================= -->
+
+                        <div class="form-group medicine-field">
+
+                            <label>
+                                Medicine
+                            </label>
+
+
+                            <div class="medicine-search-wrapper">
+
+
+                                <!-- VISIBLE SEARCH INPUT -->
+
+                                <input type="text"
+                                       class="form-control medicine-search-input"
+                                       placeholder="Search medicine name or ID..."
+                                       autocomplete="off"
+                                       value="@(selectedMedicine?.Name ?? item.MedicineName)"
+                                       data-selected-id="@(item.MedicineId?.ToString() ?? "")" />
+
+
+                                <!-- ACTUAL VALUE SUBMITTED -->
+
+                                <input type="hidden"
+                                       name="Items[@i].MedicineId"
+                                       class="medicine-id-input"
+                                       value="@(item.MedicineId?.ToString() ?? "")" />
+
+
+                                <!-- SEARCH RESULTS -->
+
+                                <div class="medicine-results">
+                                </div>
+
+
+                            </div>
+
+
+                            <!-- SELECTED MEDICINE INFORMATION -->
+
+                            <div class="selected-medicine-info">
+
+                                @if (selectedMedicine != null)
+                                {
+                                    <span>
+                                        Stock:
+                                        <strong>
+                                            @selectedMedicine.Quantity
+                                        </strong>
+                                    </span>
+
+                                    <span>
+                                        Price:
+                                        <strong>
+                                            Rs.
+                                            @selectedMedicine.Price.ToString("N2")
+                                        </strong>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>
+                                        Search and select a medicine.
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ======================================
+                             QUANTITY
+                        ======================================= -->
+
+                        <div class="form-group quantity-field">
+
+                            <label>
+                                Quantity
+                            </label>
+
+
+                            <input type="number"
+                                   name="Items[@i].Quantity"
+                                   class="form-control quantity-input"
+                                   min="1"
+                                   placeholder="Enter quantity"
+                                   value="@(item.Quantity?.ToString() ?? "")"
+                                   required />
+
+                        </div>
+
+
+                        <!-- ======================================
+                             UNIT PRICE
+                        ======================================= -->
+
+                        <div class="form-group price-field">
+
+                            <label>
+                                Unit Price
+                            </label>
+
+
+                            <input type="text"
+                                   class="form-control price-display"
+                                   value="@(selectedMedicine != null
+                                       ? "Rs. " + selectedMedicine.Price.ToString("N2")
+                                       : "Rs. 0.00")"
+                                   readonly />
+
+                        </div>
+
+
+                        <!-- ======================================
+                             TOTAL
+                        ======================================= -->
+
+                        <div class="form-group total-field">
+
+                            <label>
+                                Total
+                            </label>
+
+
+                            <input type="text"
+                                   class="form-control item-total-display"
+                                   value="Rs. 0.00"
+                                   readonly />
+
+                        </div>
+
+
+                        <!-- ======================================
+                             REMOVE
+                        ======================================= -->
+
+                        <button type="button"
+                                class="remove-btn"
+                                onclick="removeMedicine(this)">
+
+                            ×
+
+                        </button>
 
                     </div>
-
-
-                    <div class="form-group quantity-field">
-
-                        <label>
-                            Quantity
-                        </label>
-
-
-                        <input type="number"
-                               name="Items[0].Quantity"
-                               class="form-control quantity-input"
-                               min="1"
-                               placeholder="Enter quantity"
-                               required />
-
-                    </div>
-
-
-                    <div class="form-group price-field">
-
-                        <label>
-                            Unit Price
-                        </label>
-
-
-                        <input type="text"
-                               class="form-control price-display"
-                               value="Rs. 0.00"
-                               readonly />
-
-                    </div>
-
-
-                    <div class="form-group total-field">
-
-                        <label>
-                            Total
-                        </label>
-
-
-                        <input type="text"
-                               class="form-control item-total-display"
-                               value="Rs. 0.00"
-                               readonly />
-
-                    </div>
-
-
-                    <button type="button"
-                            class="remove-btn"
-                            onclick="removeMedicine(this)">
-
-                        ×
-
-                    </button>
-
-                </div>
+                }
 
             </div>
 
@@ -315,8 +443,6 @@
                     </label>
 
 
-                    <!-- Visible field used ONLY for typing -->
-
                     <input type="text"
                            id="discountInput"
                            class="form-control"
@@ -324,8 +450,6 @@
                            autocomplete="off"
                            placeholder="0.00" />
 
-
-                    <!-- Actual value submitted to controller -->
 
                     <input type="hidden"
                            asp-for="DiscountAmount"
@@ -362,8 +486,6 @@
                     </label>
 
 
-                    <!-- Visible field used ONLY for typing -->
-
                     <input type="text"
                            id="amountReceivedInput"
                            class="form-control"
@@ -371,8 +493,6 @@
                            autocomplete="off"
                            placeholder="0.00" />
 
-
-                    <!-- Actual value submitted to controller -->
 
                     <input type="hidden"
                            asp-for="AmountReceived"
@@ -418,7 +538,7 @@
 
 
             <!-- ======================================================
-                 OTHER HIDDEN VALUES
+                 HIDDEN VALUES
             ====================================================== -->
 
             <input type="hidden"
@@ -487,7 +607,26 @@
         // MEDICINE INDEX
         // ==========================================================
 
-        let medicineIndex = 1;
+        let medicineIndex =
+            document.querySelectorAll(
+                ".medicine-row"
+            ).length;
+
+
+        // ==========================================================
+        // SEARCH TIMER
+        // ==========================================================
+
+        const medicineSearchTimers =
+            new WeakMap();
+
+
+        // ==========================================================
+        // SEARCH URL
+        // ==========================================================
+
+        const medicineSearchUrl =
+            "@Url.Action("SearchMedicines", "Sale")";
 
 
         // ==========================================================
@@ -502,24 +641,543 @@
 
 
         // ==========================================================
-        // GET MEDICINE PRICE
+        // GET MEDICINE DATA FROM ROW
         // ==========================================================
 
-        function getMedicinePrice(select)
+        function getSelectedMedicineData(row)
         {
-            if (!select || !select.value)
+            if (!row)
             {
-                return 0;
+                return null;
+            }
+
+            const searchInput =
+                row.querySelector(
+                    ".medicine-search-input"
+                );
+
+            const medicineIdInput =
+                row.querySelector(
+                    ".medicine-id-input"
+                );
+
+            if (!medicineIdInput ||
+                !medicineIdInput.value)
+            {
+                return null;
+            }
+
+            return {
+                id:
+                    medicineIdInput.value,
+
+                name:
+                    searchInput
+                        ? searchInput.value
+                        : "",
+
+                price:
+                    parseFloat(
+                        row.getAttribute(
+                            "data-price"
+                        )
+                    ) || 0,
+
+                quantity:
+                    parseInt(
+                        row.getAttribute(
+                            "data-stock"
+                        )
+                    ) || 0
+            };
+        }
+
+
+        // ==========================================================
+        // SET MEDICINE INFORMATION
+        // ==========================================================
+
+        function setMedicine(
+            row,
+            medicine)
+        {
+            const searchInput =
+                row.querySelector(
+                    ".medicine-search-input"
+                );
+
+            const medicineIdInput =
+                row.querySelector(
+                    ".medicine-id-input"
+                );
+
+            const priceDisplay =
+                row.querySelector(
+                    ".price-display"
+                );
+
+            const info =
+                row.querySelector(
+                    ".selected-medicine-info"
+                );
+
+
+            medicineIdInput.value =
+                medicine.id;
+
+
+            searchInput.value =
+                medicine.name;
+
+
+            searchInput.dataset.selectedId =
+                medicine.id;
+
+
+            row.setAttribute(
+                "data-price",
+                medicine.price
+            );
+
+
+            row.setAttribute(
+                "data-stock",
+                medicine.quantity
+            );
+
+
+            priceDisplay.value =
+                formatCurrency(
+                    medicine.price
+                );
+
+
+            if (info)
+            {
+                info.innerHTML = `
+                    <span>
+                        Stock:
+                        <strong>
+                            ${medicine.quantity}
+                        </strong>
+                    </span>
+
+                    <span>
+                        Price:
+                        <strong>
+                            ${formatCurrency(medicine.price)}
+                        </strong>
+                    </span>
+                `;
             }
 
 
-            const option =
-                select.options[select.selectedIndex];
+            hideMedicineResults(row);
 
 
-            return parseFloat(
-                option.getAttribute("data-price")
-            ) || 0;
+            updateMedicineRow(row);
+
+            calculateTotal();
+        }
+
+
+        // ==========================================================
+        // CLEAR MEDICINE
+        // ==========================================================
+
+        function clearMedicine(row)
+        {
+            const searchInput =
+                row.querySelector(
+                    ".medicine-search-input"
+                );
+
+            const medicineIdInput =
+                row.querySelector(
+                    ".medicine-id-input"
+                );
+
+            const priceDisplay =
+                row.querySelector(
+                    ".price-display"
+                );
+
+            const info =
+                row.querySelector(
+                    ".selected-medicine-info"
+                );
+
+
+            medicineIdInput.value =
+                "";
+
+
+            searchInput.dataset.selectedId =
+                "";
+
+
+            row.removeAttribute(
+                "data-price"
+            );
+
+
+            row.removeAttribute(
+                "data-stock"
+            );
+
+
+            priceDisplay.value =
+                "Rs. 0.00";
+
+
+            if (info)
+            {
+                info.innerHTML =
+                    `<span>
+                        Search and select a medicine.
+                    </span>`;
+            }
+
+
+            updateMedicineRow(row);
+
+            calculateTotal();
+        }
+
+
+        // ==========================================================
+        // HIDE SEARCH RESULTS
+        // ==========================================================
+
+        function hideMedicineResults(row)
+        {
+            const results =
+                row.querySelector(
+                    ".medicine-results"
+                );
+
+            if (results)
+            {
+                results.innerHTML = "";
+                results.classList.remove(
+                    "show"
+                );
+            }
+        }
+
+
+        // ==========================================================
+        // SEARCH MEDICINES
+        // ==========================================================
+
+        function searchMedicines(
+            input)
+        {
+            const row =
+                input.closest(
+                    ".medicine-row"
+                );
+
+            if (!row)
+            {
+                return;
+            }
+
+
+            const query =
+                input.value.trim();
+
+
+            const results =
+                row.querySelector(
+                    ".medicine-results"
+                );
+
+
+            // ------------------------------------------------------
+            // Clear selected ID when user changes search text.
+            // ------------------------------------------------------
+
+            const selectedId =
+                input.dataset.selectedId || "";
+
+
+            if (
+                selectedId &&
+                input.value.trim() !==
+                input.getAttribute(
+                    "data-selected-name"
+                )
+            )
+            {
+                const hiddenId =
+                    row.querySelector(
+                        ".medicine-id-input"
+                    );
+
+                if (hiddenId)
+                {
+                    hiddenId.value = "";
+                }
+
+                input.dataset.selectedId = "";
+
+                row.removeAttribute(
+                    "data-price"
+                );
+
+                row.removeAttribute(
+                    "data-stock"
+                );
+
+                const priceDisplay =
+                    row.querySelector(
+                        ".price-display"
+                    );
+
+                if (priceDisplay)
+                {
+                    priceDisplay.value =
+                        "Rs. 0.00";
+                }
+            }
+
+
+            if (query.length < 2)
+            {
+                hideMedicineResults(row);
+
+                return;
+            }
+
+
+            if (medicineSearchTimers.has(input))
+            {
+                clearTimeout(
+                    medicineSearchTimers.get(
+                        input
+                    )
+                );
+            }
+
+
+            const timer =
+                setTimeout(
+                    async function()
+                    {
+                        results.innerHTML =
+                            `<div class="medicine-result-loading">
+                                Searching...
+                            </div>`;
+
+                        results.classList.add(
+                            "show"
+                        );
+
+
+                        try
+                        {
+                            const response =
+                                await fetch(
+                                    medicineSearchUrl +
+                                    "?q=" +
+                                    encodeURIComponent(
+                                        query
+                                    ),
+                                    {
+                                        headers:
+                                        {
+                                            "X-Requested-With":
+                                                "XMLHttpRequest"
+                                        }
+                                    }
+                                );
+
+
+                            if (!response.ok)
+                            {
+                                throw new Error(
+                                    "Search failed."
+                                );
+                            }
+
+
+                            const medicines =
+                                await response.json();
+
+
+                            // Make sure this response still
+                            // belongs to the current search.
+
+                            if (
+                                input.value
+                                    .trim()
+                                    .toLowerCase()
+                                !== query.toLowerCase()
+                            )
+                            {
+                                return;
+                            }
+
+
+                            results.innerHTML = "";
+
+
+                            if (
+                                !medicines ||
+                                medicines.length === 0
+                            )
+                            {
+                                results.innerHTML =
+                                    `<div class="medicine-result-empty">
+                                        No medicines found.
+                                    </div>`;
+
+                                results.classList.add(
+                                    "show"
+                                );
+
+                                return;
+                            }
+
+
+                            medicines.forEach(
+                                function(medicine)
+                                {
+                                    const button =
+                                        document.createElement(
+                                            "button"
+                                        );
+
+                                    button.type =
+                                        "button";
+
+                                    button.className =
+                                        "medicine-result";
+
+
+                                    const stockClass =
+                                        medicine.quantity <= 0
+                                            ? "out-of-stock"
+                                            : "";
+
+
+                                    button.innerHTML = `
+                                        <span class="medicine-result-main">
+
+                                            <strong>
+                                                ${escapeHtml(
+                                                    medicine.name
+                                                )}
+                                            </strong>
+
+                                            <small>
+                                                ID:
+                                                ${medicine.id}
+                                            </small>
+
+                                        </span>
+
+                                        <span class="medicine-result-details">
+
+                                            <span>
+                                                Stock:
+                                                <b class="${stockClass}">
+                                                    ${medicine.quantity}
+                                                </b>
+                                            </span>
+
+                                            <span>
+                                                Rs.
+                                                ${Number(
+                                                    medicine.price
+                                                ).toFixed(2)}
+                                            </span>
+
+                                        </span>
+                                    `;
+
+
+                                    button.addEventListener(
+                                        "click",
+                                        function()
+                                        {
+                                            input.setAttribute(
+                                                "data-selected-name",
+                                                medicine.name
+                                            );
+
+                                            setMedicine(
+                                                row,
+                                                medicine
+                                            );
+                                        }
+                                    );
+
+
+                                    results.appendChild(
+                                        button
+                                    );
+                                }
+                            );
+
+
+                            results.classList.add(
+                                "show"
+                            );
+                        }
+                        catch (error)
+                        {
+                            results.innerHTML =
+                                `<div class="medicine-result-empty">
+                                    Unable to search medicines.
+                                    Please try again.
+                                </div>`;
+
+                            results.classList.add(
+                                "show"
+                            );
+                        }
+
+                    },
+                    250
+                );
+
+
+            medicineSearchTimers.set(
+                input,
+                timer
+            );
+        }
+
+
+        // ==========================================================
+        // ESCAPE HTML
+        // ==========================================================
+
+        function escapeHtml(value)
+        {
+            return String(value ?? "")
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
         }
 
 
@@ -535,32 +1193,30 @@
             }
 
 
-            const select =
-                row.querySelector(".medicine-select");
-
-
             const quantityInput =
-                row.querySelector(".quantity-input");
-
-
-            const priceDisplay =
-                row.querySelector(".price-display");
+                row.querySelector(
+                    ".quantity-input"
+                );
 
 
             const totalDisplay =
-                row.querySelector(".item-total-display");
+                row.querySelector(
+                    ".item-total-display"
+                );
 
 
             const price =
-                getMedicinePrice(select);
+                parseFloat(
+                    row.getAttribute(
+                        "data-price"
+                    )
+                ) || 0;
 
 
             const quantity =
-                parseInt(quantityInput.value) || 0;
-
-
-            priceDisplay.value =
-                formatCurrency(price);
+                parseInt(
+                    quantityInput.value
+                ) || 0;
 
 
             totalDisplay.value =
@@ -583,7 +1239,9 @@
 
 
             const value =
-                parseFloat(input.value);
+                parseFloat(
+                    input.value
+                );
 
 
             if (isNaN(value))
@@ -615,7 +1273,9 @@
 
 
             const value =
-                parseFloat(input.value);
+                parseFloat(
+                    input.value
+                );
 
 
             if (isNaN(value))
@@ -644,49 +1304,52 @@
 
 
             document
-                .querySelectorAll(".medicine-row")
-                .forEach(function(row)
-                {
-                    const select =
-                        row.querySelector(
-                            ".medicine-select"
-                        );
+                .querySelectorAll(
+                    ".medicine-row"
+                )
+                .forEach(
+                    function(row)
+                    {
+                        const price =
+                            parseFloat(
+                                row.getAttribute(
+                                    "data-price"
+                                )
+                            ) || 0;
 
 
-                    const quantityInput =
-                        row.querySelector(
-                            ".quantity-input"
-                        );
+                        const quantityInput =
+                            row.querySelector(
+                                ".quantity-input"
+                            );
 
 
-                    const price =
-                        getMedicinePrice(select);
+                        const quantity =
+                            parseInt(
+                                quantityInput.value
+                            ) || 0;
 
 
-                    const quantity =
-                        parseInt(
-                            quantityInput.value
-                        ) || 0;
+                        const itemTotal =
+                            price * quantity;
 
 
-                    const itemTotal =
-                        price * quantity;
+                        const totalDisplay =
+                            row.querySelector(
+                                ".item-total-display"
+                            );
 
 
-                    const totalDisplay =
-                        row.querySelector(
-                            ".item-total-display"
-                        );
+                        totalDisplay.value =
+                            formatCurrency(
+                                itemTotal
+                            );
 
 
-                    totalDisplay.value =
-                        formatCurrency(
-                            itemTotal
-                        );
-
-
-                    total += itemTotal;
-                });
+                        total +=
+                            itemTotal;
+                    }
+                );
 
 
             document.getElementById(
@@ -701,7 +1364,9 @@
                 total.toFixed(2);
 
 
-            calculatePayment(total);
+            calculatePayment(
+                total
+            );
         }
 
 
@@ -711,18 +1376,6 @@
 
         function calculatePayment(total)
         {
-            const discountInput =
-                document.getElementById(
-                    "discountInput"
-                );
-
-
-            const amountReceivedInput =
-                document.getElementById(
-                    "amountReceivedInput"
-                );
-
-
             let discount =
                 getDiscount();
 
@@ -730,8 +1383,6 @@
             let amountReceived =
                 getAmountReceived();
 
-
-            // Discount cannot exceed total
 
             if (discount > total)
             {
@@ -760,10 +1411,6 @@
             }
 
 
-            // ======================================================
-            // DISPLAY VALUES
-            // ======================================================
-
             document.getElementById(
                 "netAmountDisplay"
             ).textContent =
@@ -781,10 +1428,6 @@
             ).textContent =
                 formatCurrency(balance);
 
-
-            // ======================================================
-            // HIDDEN VALUES SENT TO SERVER
-            // ======================================================
 
             document.getElementById(
                 "discountAmount"
@@ -822,7 +1465,9 @@
         // ==========================================================
 
         document
-            .getElementById("addMedicineBtn")
+            .getElementById(
+                "addMedicineBtn"
+            )
             .addEventListener(
                 "click",
                 function()
@@ -850,30 +1495,35 @@
                                 Medicine
                             </label>
 
-                            <select
-                                name="Items[${medicineIndex}].MedicineId"
-                                class="form-control medicine-select"
-                                required>
+                            <div class="medicine-search-wrapper">
 
-                                <option value="">
-                                    -- Select Medicine --
-                                </option>
+                                <input
+                                    type="text"
+                                    class="form-control medicine-search-input"
+                                    placeholder="Search medicine name or ID..."
+                                    autocomplete="off"
+                                    value=""
+                                />
 
-                                @foreach (var medicine in medicines)
-                                {
-                                    <option
-                                        value="@medicine.Id"
-                                        data-price="@medicine.Price"
-                                        data-name="@medicine.Name">
+                                <input
+                                    type="hidden"
+                                    name="Items[${medicineIndex}].MedicineId"
+                                    class="medicine-id-input"
+                                    value=""
+                                />
 
-                                        @medicine.Name
-                                        | Stock: @medicine.Quantity
-                                        | Rs. @medicine.Price.ToString("N2")
+                                <div class="medicine-results">
+                                </div>
 
-                                    </option>
-                                }
+                            </div>
 
-                            </select>
+                            <div class="selected-medicine-info">
+
+                                <span>
+                                    Search and select a medicine.
+                                </span>
+
+                            </div>
 
                         </div>
 
@@ -890,7 +1540,8 @@
                                 class="form-control quantity-input"
                                 min="1"
                                 placeholder="Enter quantity"
-                                required />
+                                required
+                            />
 
                         </div>
 
@@ -905,7 +1556,8 @@
                                 type="text"
                                 class="form-control price-display"
                                 value="Rs. 0.00"
-                                readonly />
+                                readonly
+                            />
 
                         </div>
 
@@ -920,7 +1572,8 @@
                                 type="text"
                                 class="form-control item-total-display"
                                 value="Rs. 0.00"
-                                readonly />
+                                readonly
+                            />
 
                         </div>
 
@@ -936,7 +1589,9 @@
                     `;
 
 
-                    container.appendChild(row);
+                    container.appendChild(
+                        row
+                    );
 
 
                     medicineIndex++;
@@ -967,7 +1622,9 @@
 
 
             button
-                .closest(".medicine-row")
+                .closest(
+                    ".medicine-row"
+                )
                 .remove();
 
 
@@ -992,9 +1649,9 @@
             rows.forEach(
                 function(row, index)
                 {
-                    const medicineSelect =
+                    const medicineIdInput =
                         row.querySelector(
-                            ".medicine-select"
+                            ".medicine-id-input"
                         );
 
 
@@ -1004,7 +1661,7 @@
                         );
 
 
-                    medicineSelect.name =
+                    medicineIdInput.name =
                         `Items[${index}].MedicineId`;
 
 
@@ -1020,41 +1677,25 @@
 
 
         // ==========================================================
-        // MEDICINE CHANGE
-        // ==========================================================
-
-        document.addEventListener(
-            "change",
-            function(event)
-            {
-                if (
-                    event.target.classList.contains(
-                        "medicine-select"
-                    )
-                )
-                {
-                    const row =
-                        event.target.closest(
-                            ".medicine-row"
-                        );
-
-
-                    updateMedicineRow(row);
-
-                    calculateTotal();
-                }
-            }
-        );
-
-
-        // ==========================================================
-        // QUANTITY INPUT
+        // MEDICINE SEARCH INPUT
         // ==========================================================
 
         document.addEventListener(
             "input",
             function(event)
             {
+                if (
+                    event.target.classList.contains(
+                        "medicine-search-input"
+                    )
+                )
+                {
+                    searchMedicines(
+                        event.target
+                    );
+                }
+
+
                 if (
                     event.target.classList.contains(
                         "quantity-input"
@@ -1067,7 +1708,10 @@
                         );
 
 
-                    updateMedicineRow(row);
+                    updateMedicineRow(
+                        row
+                    );
+
 
                     calculateTotal();
                 }
@@ -1080,7 +1724,9 @@
         // ==========================================================
 
         document
-            .getElementById("discountInput")
+            .getElementById(
+                "discountInput"
+            )
             .addEventListener(
                 "input",
                 function()
@@ -1093,7 +1739,9 @@
                         ) || 0;
 
 
-                    calculatePayment(total);
+                    calculatePayment(
+                        total
+                    );
                 }
             );
 
@@ -1103,7 +1751,9 @@
         // ==========================================================
 
         document
-            .getElementById("amountReceivedInput")
+            .getElementById(
+                "amountReceivedInput"
+            )
             .addEventListener(
                 "input",
                 function()
@@ -1116,9 +1766,42 @@
                         ) || 0;
 
 
-                    calculatePayment(total);
+                    calculatePayment(
+                        total
+                    );
                 }
             );
+
+
+        // ==========================================================
+        // CLOSE SEARCH RESULTS WHEN CLICKING OUTSIDE
+        // ==========================================================
+
+        document.addEventListener(
+            "click",
+            function(event)
+            {
+                if (
+                    !event.target.closest(
+                        ".medicine-search-wrapper"
+                    )
+                )
+                {
+                    document
+                        .querySelectorAll(
+                            ".medicine-results"
+                        )
+                        .forEach(
+                            function(results)
+                            {
+                                results.classList.remove(
+                                    "show"
+                                );
+                            }
+                        );
+                }
+            }
+        );
 
 
         // ==========================================================
@@ -1126,7 +1809,9 @@
         // ==========================================================
 
         document
-            .getElementById("saleForm")
+            .getElementById(
+                "saleForm"
+            )
             .addEventListener(
                 "submit",
                 function(event)
@@ -1146,11 +1831,9 @@
                     {
                         event.preventDefault();
 
-
                         alert(
                             "Please add at least one medicine."
                         );
-
 
                         return;
                     }
@@ -1162,9 +1845,9 @@
                     rows.forEach(
                         function(row)
                         {
-                            const select =
+                            const medicineId =
                                 row.querySelector(
-                                    ".medicine-select"
+                                    ".medicine-id-input"
                                 );
 
 
@@ -1174,7 +1857,9 @@
                                 );
 
 
-                            if (!select.value)
+                            if (
+                                !medicineId.value
+                            )
                             {
                                 valid = false;
                             }
@@ -1186,7 +1871,9 @@
                                 ) || 0;
 
 
-                            if (quantity <= 0)
+                            if (
+                                quantity <= 0
+                            )
                             {
                                 valid = false;
                             }
@@ -1198,11 +1885,9 @@
                     {
                         event.preventDefault();
 
-
                         alert(
-                            "Please select a medicine and enter a valid quantity for every medicine."
+                            "Please search and select a medicine and enter a valid quantity for every medicine."
                         );
-
 
                         return;
                     }
@@ -1229,21 +1914,15 @@
                     {
                         event.preventDefault();
 
-
                         alert(
                             "Please select a customer when there is an outstanding balance."
                         );
 
-
                         customer.focus();
-
 
                         return;
                     }
 
-
-                    // Make absolutely sure the hidden
-                    // payment values contain the latest values.
 
                     const total =
                         parseFloat(
@@ -1253,31 +1932,110 @@
                         ) || 0;
 
 
-                    calculatePayment(total);
+                    calculatePayment(
+                        total
+                    );
                 }
             );
 
 
         // ==========================================================
-        // INITIALIZE PAGE
+        // INITIALIZE SELECTED MEDICINES
         // ==========================================================
 
         document.addEventListener(
             "DOMContentLoaded",
             function()
             {
-                const firstRow =
-                    document.querySelector(
+                document
+                    .querySelectorAll(
                         ".medicine-row"
-                    );
+                    )
+                    .forEach(
+                        function(row)
+                        {
+                            const searchInput =
+                                row.querySelector(
+                                    ".medicine-search-input"
+                                );
 
 
-                if (firstRow)
-                {
-                    updateMedicineRow(
-                        firstRow
+                            const medicineIdInput =
+                                row.querySelector(
+                                    ".medicine-id-input"
+                                );
+
+
+                            if (
+                                medicineIdInput &&
+                                medicineIdInput.value
+                            )
+                            {
+                                const info =
+                                    row.querySelector(
+                                        ".selected-medicine-info"
+                                    );
+
+
+                                const priceDisplay =
+                                    row.querySelector(
+                                        ".price-display"
+                                    );
+
+
+                                if (
+                                    priceDisplay &&
+                                    priceDisplay.value !==
+                                    "Rs. 0.00"
+                                )
+                                {
+                                    const priceText =
+                                        priceDisplay.value
+                                            .replace(
+                                                "Rs.",
+                                                ""
+                                            )
+                                            .trim();
+
+
+                                    const price =
+                                        parseFloat(
+                                            priceText
+                                        ) || 0;
+
+
+                                    row.setAttribute(
+                                        "data-price",
+                                        price
+                                    );
+
+
+                                    if (searchInput)
+                                    {
+                                        searchInput.setAttribute(
+                                            "data-selected-name",
+                                            searchInput.value
+                                        );
+
+                                        searchInput.dataset.selectedId =
+                                            medicineIdInput.value;
+                                    }
+
+
+                                    if (info)
+                                    {
+                                        // Existing Razor-rendered
+                                        // information is retained.
+                                    }
+                                }
+                            }
+
+
+                            updateMedicineRow(
+                                row
+                            );
+                        }
                     );
-                }
 
 
                 calculateTotal();
@@ -1297,6 +2055,7 @@
     .sale-page
     {
         max-width: 1100px;
+
         margin: 0 auto;
     }
 
@@ -1308,8 +2067,11 @@
     .sale-header
     {
         display: flex;
+
         justify-content: space-between;
+
         align-items: center;
+
         margin-bottom: 22px;
     }
 
@@ -1317,7 +2079,9 @@
     .sale-header h1
     {
         margin: 0;
+
         color: #172554;
+
         font-size: 30px;
     }
 
@@ -1325,7 +2089,9 @@
     .sale-header p
     {
         margin: 5px 0 0;
+
         color: #64748b;
+
         font-size: 14px;
     }
 
@@ -1333,12 +2099,19 @@
     .back-btn
     {
         padding: 10px 15px;
+
         background: white;
+
         color: #475569;
+
         border: 1px solid #e2e8f0;
+
         border-radius: 9px;
+
         text-decoration: none;
+
         font-size: 13px;
+
         font-weight: 600;
     }
 
@@ -1346,6 +2119,7 @@
     .back-btn:hover
     {
         background: #f8fafc;
+
         color: #172554;
     }
 
@@ -1357,10 +2131,15 @@
     .sale-card
     {
         background: white;
+
         border: 1px solid #e2e8f0;
+
         border-radius: 15px;
+
         padding: 24px;
+
         margin-bottom: 18px;
+
         box-shadow:
             0 4px 16px
             rgba(15,23,42,.05);
@@ -1370,9 +2149,13 @@
     .card-title
     {
         display: flex;
+
         justify-content: space-between;
+
         align-items: center;
+
         gap: 15px;
+
         margin-bottom: 22px;
     }
 
@@ -1380,7 +2163,9 @@
     .card-title h2
     {
         margin: 0;
+
         color: #172554;
+
         font-size: 19px;
     }
 
@@ -1388,7 +2173,9 @@
     .card-title p
     {
         margin: 5px 0 0;
+
         color: #64748b;
+
         font-size: 12px;
     }
 
@@ -1406,9 +2193,13 @@
     .form-group label
     {
         display: block;
+
         margin-bottom: 7px;
+
         color: #334155;
+
         font-size: 12px;
+
         font-weight: 700;
     }
 
@@ -1416,14 +2207,23 @@
     .form-control
     {
         width: 100%;
+
         box-sizing: border-box;
+
         padding: 11px 12px;
+
         border: 1px solid #cbd5e1;
+
         border-radius: 9px;
+
         background: white;
+
         color: #172554;
+
         outline: none;
+
         font-size: 13px;
+
         transition: .2s;
     }
 
@@ -1431,6 +2231,7 @@
     .form-control:focus
     {
         border-color: #2563eb;
+
         box-shadow:
             0 0 0 3px
             rgba(37,99,235,.10);
@@ -1440,6 +2241,7 @@
     .form-control[readonly]
     {
         background: #f8fafc;
+
         color: #475569;
     }
 
@@ -1447,9 +2249,46 @@
     .form-group small
     {
         display: block;
+
         margin-top: 6px;
+
         color: #94a3b8;
+
         font-size: 11px;
+    }
+
+
+    /* ==========================================================
+       SEARCH INFORMATION
+    ========================================================== */
+
+    .medicine-search-info
+    {
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+        margin-bottom: 15px;
+
+        padding: 11px 13px;
+
+        background: #eff6ff;
+
+        border: 1px solid #dbeafe;
+
+        border-radius: 9px;
+
+        color: #475569;
+
+        font-size: 12px;
+    }
+
+
+    .search-info-icon
+    {
+        font-size: 15px;
     }
 
 
@@ -1462,7 +2301,7 @@
         display: grid;
 
         grid-template-columns:
-            minmax(280px, 2fr)
+            minmax(300px, 2fr)
             110px
             150px
             150px
@@ -1491,12 +2330,212 @@
 
 
     /* ==========================================================
+       SEARCH WRAPPER
+    ========================================================== */
+
+    .medicine-search-wrapper
+    {
+        position: relative;
+    }
+
+
+    .medicine-search-input
+    {
+        background: white;
+    }
+
+
+    /* ==========================================================
+       SEARCH RESULTS
+    ========================================================== */
+
+    .medicine-results
+    {
+        position: absolute;
+
+        top: calc(100% + 5px);
+
+        left: 0;
+
+        right: 0;
+
+        z-index: 1000;
+
+        display: none;
+
+        max-height: 310px;
+
+        overflow-y: auto;
+
+        background: white;
+
+        border: 1px solid #cbd5e1;
+
+        border-radius: 10px;
+
+        box-shadow:
+            0 10px 30px
+            rgba(15,23,42,.14);
+    }
+
+
+    .medicine-results.show
+    {
+        display: block;
+    }
+
+
+    .medicine-result
+    {
+        width: 100%;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        gap: 15px;
+
+        padding: 12px 14px;
+
+        border: none;
+
+        border-bottom: 1px solid #f1f5f9;
+
+        background: white;
+
+        color: #172554;
+
+        text-align: left;
+
+        cursor: pointer;
+    }
+
+
+    .medicine-result:last-child
+    {
+        border-bottom: none;
+    }
+
+
+    .medicine-result:hover
+    {
+        background: #eff6ff;
+    }
+
+
+    .medicine-result-main
+    {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 3px;
+
+        min-width: 0;
+    }
+
+
+    .medicine-result-main strong
+    {
+        font-size: 13px;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+    }
+
+
+    .medicine-result-main small
+    {
+        color: #94a3b8;
+
+        font-size: 10px;
+    }
+
+
+    .medicine-result-details
+    {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: flex-end;
+
+        gap: 3px;
+
+        flex-shrink: 0;
+
+        color: #64748b;
+
+        font-size: 10px;
+    }
+
+
+    .medicine-result-details span:last-child
+    {
+        color: #172554;
+
+        font-weight: 700;
+    }
+
+
+    .out-of-stock
+    {
+        color: #dc2626;
+    }
+
+
+    .medicine-result-loading,
+    .medicine-result-empty
+    {
+        padding: 15px;
+
+        color: #64748b;
+
+        text-align: center;
+
+        font-size: 12px;
+    }
+
+
+    /* ==========================================================
+       SELECTED MEDICINE INFORMATION
+    ========================================================== */
+
+    .selected-medicine-info
+    {
+        display: flex;
+
+        gap: 14px;
+
+        margin-top: 6px;
+
+        color: #64748b;
+
+        font-size: 10px;
+    }
+
+
+    .selected-medicine-info strong
+    {
+        color: #172554;
+
+        font-size: 11px;
+    }
+
+
+    /* ==========================================================
        REMOVE BUTTON
     ========================================================== */
 
     .remove-btn
     {
         width: 35px;
+
         height: 35px;
 
         border: 1px solid #fecaca;
@@ -1630,11 +2669,6 @@
     }
 
 
-    /*
-     * Hide the summary when there are no
-     * validation messages.
-     */
-
     .validation-summary:empty
     {
         display: none;
@@ -1711,7 +2745,8 @@
     {
         .medicine-row
         {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+                1fr 1fr;
         }
 
 
@@ -1729,7 +2764,8 @@
 
         .payment-grid
         {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns:
+                1fr 1fr;
         }
     }
 
@@ -1739,7 +2775,9 @@
         .sale-header
         {
             flex-direction: column;
+
             align-items: flex-start;
+
             gap: 12px;
         }
 
@@ -1747,6 +2785,7 @@
         .card-title
         {
             flex-direction: column;
+
             align-items: flex-start;
         }
 
@@ -1779,8 +2818,26 @@
         .complete-btn
         {
             width: 100%;
+
             text-align: center;
+
             box-sizing: border-box;
+        }
+
+
+        .medicine-result
+        {
+            flex-direction: column;
+
+            align-items: flex-start;
+        }
+
+
+        .medicine-result-details
+        {
+            flex-direction: row;
+
+            align-items: center;
         }
     }
 

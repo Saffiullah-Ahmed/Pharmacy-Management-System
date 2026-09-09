@@ -17,10 +17,21 @@ namespace PharmacyManagementSystem.Web.Controllers
             var permissions =
                 User.Claims
                     .Where(c =>
-                        c.Type.Equals("Permission", StringComparison.OrdinalIgnoreCase)
-                        || c.Type.Equals("Permissions", StringComparison.OrdinalIgnoreCase)
-                        || c.Type.Equals("permission", StringComparison.OrdinalIgnoreCase)
-                        || c.Type.Equals("permissions", StringComparison.OrdinalIgnoreCase))
+                        c.Type.Equals(
+                            "Permission",
+                            StringComparison.OrdinalIgnoreCase)
+                        ||
+                        c.Type.Equals(
+                            "Permissions",
+                            StringComparison.OrdinalIgnoreCase)
+                        ||
+                        c.Type.Equals(
+                            "permission",
+                            StringComparison.OrdinalIgnoreCase)
+                        ||
+                        c.Type.Equals(
+                            "permissions",
+                            StringComparison.OrdinalIgnoreCase))
                     .SelectMany(c =>
                         c.Value.Split(
                             new[] { ',', ';', '|' },
@@ -43,16 +54,22 @@ namespace PharmacyManagementSystem.Web.Controllers
         public IActionResult Index()
         {
             if (!HasSalesPermission())
-                return RedirectToAction("AccessDenied", "Account");
+                return RedirectToAction(
+                    "AccessDenied",
+                    "Account");
 
             int pharmacyId = GetPharmacyId();
 
             if (pharmacyId <= 0)
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
 
-            var sales = SaleStorage.Load(pharmacyId);
+            var sales =
+                SaleStorage.Load(pharmacyId);
 
-            var returns = ReturnStorage.Load(pharmacyId);
+            var returns =
+                ReturnStorage.Load(pharmacyId);
 
             var refundBySale =
                 returns
@@ -64,40 +81,59 @@ namespace PharmacyManagementSystem.Web.Controllers
             decimal totalRefund =
                 returns.Sum(x => x.TotalRefund);
 
-            DateTime today = DateTime.Today;
+            DateTime today =
+                DateTime.Today;
 
             var todaySales =
                 sales
-                    .Where(x => x.SaleDate.Date == today)
+                    .Where(x =>
+                        x.SaleDate.Date == today)
                     .ToList();
 
             var todayReturns =
                 returns
-                    .Where(x => x.ReturnDate.Date == today)
+                    .Where(x =>
+                        x.ReturnDate.Date == today)
                     .ToList();
 
             decimal todayRefund =
-                todayReturns.Sum(x => x.TotalRefund);
+                todayReturns.Sum(
+                    x => x.TotalRefund);
 
             decimal todayGrossSales =
                 Math.Max(
                     0,
-                    todaySales.Sum(x => x.TotalAmount)
+                    todaySales.Sum(
+                        x => x.TotalAmount)
                     - todayRefund);
 
             decimal todayNetSales =
                 Math.Max(
                     0,
-                    todaySales.Sum(x => x.NetAmount)
+                    todaySales.Sum(
+                        x => x.NetAmount)
                     - todayRefund);
 
-            ViewBag.Returns = returns;
-            ViewBag.RefundBySale = refundBySale;
-            ViewBag.TotalRefund = totalRefund;
-            ViewBag.TodaySalesCount = todaySales.Count;
-            ViewBag.TodayGrossSales = todayGrossSales;
-            ViewBag.TodayNetSales = todayNetSales;
-            ViewBag.TodayRefund = todayRefund;
+            ViewBag.Returns =
+                returns;
+
+            ViewBag.RefundBySale =
+                refundBySale;
+
+            ViewBag.TotalRefund =
+                totalRefund;
+
+            ViewBag.TodaySalesCount =
+                todaySales.Count;
+
+            ViewBag.TodayGrossSales =
+                todayGrossSales;
+
+            ViewBag.TodayNetSales =
+                todayNetSales;
+
+            ViewBag.TodayRefund =
+                todayRefund;
 
             return View(sales);
         }
@@ -111,28 +147,97 @@ namespace PharmacyManagementSystem.Web.Controllers
         public IActionResult Create()
         {
             if (!HasSalesPermission())
-                return RedirectToAction("AccessDenied", "Account");
+                return RedirectToAction(
+                    "AccessDenied",
+                    "Account");
 
-            int pharmacyId = GetPharmacyId();
+            int pharmacyId =
+                GetPharmacyId();
 
             if (pharmacyId <= 0)
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
 
-            ViewBag.Medicines =
-                MedicineStorage.Load(pharmacyId);
+            // ------------------------------------------------------
+            // IMPORTANT:
+            // We DO NOT load all medicines here.
+            //
+            // Medicines are searched server-side through:
+            // /Sale/SearchMedicines
+            // ------------------------------------------------------
 
             ViewBag.Customers =
-                CustomerStorage.Load(pharmacyId);
+                CustomerStorage.Load(
+                    pharmacyId);
 
-            var sale = new Sale
-            {
-                GenerateBill = true,
-                AmountReceived = 0,
-                DiscountAmount = 0,
-                CustomerId = null
-            };
+            var sale =
+                new Sale
+                {
+                    GenerateBill = true,
+                    AmountReceived = 0,
+                    DiscountAmount = 0,
+                    CustomerId = null
+                };
+
+            ViewBag.SelectedMedicines =
+                new List<Medicine>();
 
             return View(sale);
+        }
+
+
+        // ==========================================================
+        // SEARCH MEDICINES - SERVER SIDE
+        // ==========================================================
+
+        [HttpGet]
+        public IActionResult SearchMedicines(
+            string? q)
+        {
+            if (!HasSalesPermission())
+            {
+                return Unauthorized();
+            }
+
+            int pharmacyId =
+                GetPharmacyId();
+
+            if (pharmacyId <= 0)
+            {
+                return Unauthorized();
+            }
+
+            // ------------------------------------------------------
+            // Require at least 2 characters.
+            //
+            // This prevents accidentally loading a huge medicine
+            // list when the search box is empty.
+            // ------------------------------------------------------
+
+            if (string.IsNullOrWhiteSpace(q) ||
+                q.Trim().Length < 2)
+            {
+                return Json(
+                    Array.Empty<object>());
+            }
+
+            var medicines =
+                SaleStorage.SearchMedicines(
+                    q.Trim(),
+                    pharmacyId,
+                    20);
+
+            var results =
+                medicines.Select(m => new
+                {
+                    id = m.Id,
+                    name = m.Name,
+                    price = m.Price,
+                    quantity = m.Quantity
+                });
+
+            return Json(results);
         }
 
 
@@ -145,32 +250,62 @@ namespace PharmacyManagementSystem.Web.Controllers
         public IActionResult Create(Sale sale)
         {
             if (!HasSalesPermission())
-                return RedirectToAction("AccessDenied", "Account");
+                return RedirectToAction(
+                    "AccessDenied",
+                    "Account");
 
-            int pharmacyId = GetPharmacyId();
+            int pharmacyId =
+                GetPharmacyId();
 
             if (pharmacyId <= 0)
-                return RedirectToAction("Login", "Account");
+                return RedirectToAction(
+                    "Login",
+                    "Account");
 
-            // Always load only this pharmacy's data.
-            ViewBag.Medicines =
-                MedicineStorage.Load(pharmacyId);
+            // ------------------------------------------------------
+            // Customers are still loaded normally.
+            // ------------------------------------------------------
 
             ViewBag.Customers =
-                CustomerStorage.Load(pharmacyId);
+                CustomerStorage.Load(
+                    pharmacyId);
 
-            sale.Items ??= new List<SaleItem>();
-
-
-            // ------------------------------------------------------
-            // Invoice number is generated by the server.
-            // ------------------------------------------------------
-
-            ModelState.Remove(nameof(Sale.InvoiceNumber));
+            sale.Items ??=
+                new List<SaleItem>();
 
 
             // ------------------------------------------------------
-            // At least one item is required.
+            // Load ONLY medicines that were selected.
+            //
+            // We never load the entire medicine table.
+            // ------------------------------------------------------
+
+            var selectedMedicineIds =
+                sale.Items
+                    .Where(x =>
+                        x.MedicineId.HasValue &&
+                        x.MedicineId.Value > 0)
+                    .Select(x =>
+                        x.MedicineId!.Value)
+                    .Distinct()
+                    .ToList();
+
+            ViewBag.SelectedMedicines =
+                SaleStorage.GetMedicinesByIds(
+                    selectedMedicineIds,
+                    pharmacyId);
+
+
+            // ------------------------------------------------------
+            // Invoice number is generated by server.
+            // ------------------------------------------------------
+
+            ModelState.Remove(
+                nameof(Sale.InvoiceNumber));
+
+
+            // ------------------------------------------------------
+            // At least one item required.
             // ------------------------------------------------------
 
             if (!sale.Items.Any())
@@ -234,11 +369,11 @@ namespace PharmacyManagementSystem.Web.Controllers
 
 
             // ------------------------------------------------------
-            // Calculate totals only from valid quantities.
-            // Price is NOT trusted from the browser.
+            // Calculate estimated total.
             //
-            // The database will calculate the actual prices again
-            // inside SaleStorage.Add().
+            // IMPORTANT:
+            // Price is NOT trusted from browser.
+            // SaleStorage.Add() gets the real price again.
             // ------------------------------------------------------
 
             decimal estimatedTotal = 0;
@@ -258,21 +393,31 @@ namespace PharmacyManagementSystem.Web.Controllers
                         ModelState.AddModelError(
                             "",
                             "One of the selected medicines is invalid.");
+
                         continue;
                     }
 
                     estimatedTotal +=
-                        item.Quantity.Value * medicine.Price;
+                        item.Quantity.Value *
+                        medicine.Price;
                 }
             }
 
 
-            sale.TotalAmount = estimatedTotal;
+            sale.TotalAmount =
+                estimatedTotal;
 
 
+            // ------------------------------------------------------
             // Discount cannot exceed total.
-            if (sale.DiscountAmount > sale.TotalAmount)
-                sale.DiscountAmount = sale.TotalAmount;
+            // ------------------------------------------------------
+
+            if (sale.DiscountAmount >
+                sale.TotalAmount)
+            {
+                sale.DiscountAmount =
+                    sale.TotalAmount;
+            }
 
 
             sale.NetAmount =
@@ -288,7 +433,8 @@ namespace PharmacyManagementSystem.Web.Controllers
                 sale.AmountReceived = 0;
 
 
-            if (sale.AmountReceived >= sale.NetAmount)
+            if (sale.AmountReceived >=
+                sale.NetAmount)
             {
                 sale.ChangeAmount =
                     sale.AmountReceived -
@@ -333,9 +479,11 @@ namespace PharmacyManagementSystem.Web.Controllers
             // Server-controlled sale information.
             // ------------------------------------------------------
 
-            sale.PharmacyId = pharmacyId;
+            sale.PharmacyId =
+                pharmacyId;
 
-            sale.SaleDate = DateTime.Now;
+            sale.SaleDate =
+                DateTime.Now;
 
             sale.InvoiceNumber =
                 SaleStorage.GenerateInvoiceNumber(
@@ -365,7 +513,10 @@ namespace PharmacyManagementSystem.Web.Controllers
 
                 return RedirectToAction(
                     nameof(Bill),
-                    new { id = sale.Id });
+                    new
+                    {
+                        id = sale.Id
+                    });
             }
             catch (Exception ex)
             {
@@ -390,7 +541,8 @@ namespace PharmacyManagementSystem.Web.Controllers
                     "AccessDenied",
                     "Account");
 
-            int pharmacyId = GetPharmacyId();
+            int pharmacyId =
+                GetPharmacyId();
 
             if (pharmacyId <= 0)
                 return RedirectToAction(
@@ -421,7 +573,8 @@ namespace PharmacyManagementSystem.Web.Controllers
                     "AccessDenied",
                     "Account");
 
-            int pharmacyId = GetPharmacyId();
+            int pharmacyId =
+                GetPharmacyId();
 
             if (pharmacyId <= 0)
                 return RedirectToAction(
@@ -441,7 +594,8 @@ namespace PharmacyManagementSystem.Web.Controllers
                     .GroupBy(x => x.SaleId)
                     .ToDictionary(
                         x => x.Key,
-                        x => x.Sum(r => r.TotalRefund));
+                        x => x.Sum(
+                            r => r.TotalRefund));
 
 
             var csv =
@@ -452,7 +606,8 @@ namespace PharmacyManagementSystem.Web.Controllers
                 "Invoice Number,Sale Date,Original Gross Sales,Discount,Original Net Amount,Refund,Actual Gross Sales,Actual Net Sales,Amount Received,Change,Balance");
 
 
-            foreach (var sale in
+            foreach (
+                var sale in
                 sales.OrderByDescending(
                     x => x.SaleDate))
             {
@@ -512,7 +667,8 @@ namespace PharmacyManagementSystem.Web.Controllers
         // CSV ESCAPE
         // ==========================================================
 
-        private static string CsvEscape(string? value)
+        private static string CsvEscape(
+            string? value)
         {
             if (string.IsNullOrEmpty(value))
                 return "";
@@ -523,7 +679,9 @@ namespace PharmacyManagementSystem.Web.Controllers
                 value.Contains('\r'))
             {
                 return "\"" +
-                       value.Replace("\"", "\"\"") +
+                       value.Replace(
+                           "\"",
+                           "\"\"") +
                        "\"";
             }
 
@@ -538,7 +696,8 @@ namespace PharmacyManagementSystem.Web.Controllers
         private int GetPharmacyId()
         {
             var claim =
-                User.FindFirst("PharmacyId")?.Value;
+                User.FindFirst(
+                    "PharmacyId")?.Value;
 
             if (int.TryParse(
                 claim,
